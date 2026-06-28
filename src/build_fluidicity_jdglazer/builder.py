@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, override
+from typing import Callable, Dict, List, Optional
 
+# static variable to be referenced across project where targets are defined
+build_target_loader = BasicBuildTargetLoader()
 
 class BuildException(Exception):
 
@@ -59,12 +61,12 @@ class BuildTarget:
             except:
                 print(f"Target cleanup failed: target name - {self._name}")
 
-    @override
     def __str__(self):
         return f"{self._name}" + \
                f": {self._description}" if self._description else "" + \
-               f"\n\r  dependencies: {", ". join(self._dependency_names)}"
+               "\n\r  dependencies: " + ", ". join(self._dependency_names)
 
+# TO DO: create specific BuildTarget extensions class for tasks like downloading files and other common tasks
 
 class BuildTargetLoader(ABC):
 
@@ -74,6 +76,20 @@ class BuildTargetLoader(ABC):
     @abstractmethod
     def load_available_build_targets(self) -> Dict[str, BuildTarget]:
         return {}
+
+class BasicBuildTargetLoader(BuildTargetLoader):
+
+    def __init__(self):
+        super.__init__()
+
+        self._build_targets :  Dict[str, BuildTarget] = {}
+
+    def add_target(self, build_target: BuildTarget) -> None:
+        self._build_targets[build_target.name] = build_target
+
+    # TO DO: add @overide when minimum python version becomes 3.12
+    def load_available_build_targets(self) -> Dict[str, BuildTarget]:
+        return self._build_targets
 
 class Builder:
 
@@ -136,7 +152,7 @@ class Builder:
 
          def run_target(target_to_run: BuildTarget, dep_path_str: str):
              if self._verbose:
-                 print(f"Checking target for dependency path: {dep_path_str}")
+                 print(f"Running target '{target_to_run.name}'...")
 
              # we let exceptions propagate out from build to stop the recursive build iteration
              if target_to_run.build():
@@ -148,4 +164,6 @@ class Builder:
          except:
              # Attempt to run cleanup in the reverse order we ran the build
              for target in reversed(targets_run):
-                 target.cleanup()
+                 if self._verbose:
+                     print(f"Running cleanup for target {target.name}")
+                     target.cleanup()

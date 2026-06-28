@@ -1,18 +1,15 @@
 import sys
 import unittest
-from typing import Dict, override
+from typing import Dict
 from unittest.mock import MagicMock, call
 
-sys.path.append('.\\src')
-
-from build_fluidicity.builder import BuildTargetLoader, Builder, BuildException, BuildTarget
+from build_fluidicity_jdglazer.builder import BuildTargetLoader, Builder, BuildException, BuildTarget
 
 class MockBuildTargetLoader(BuildTargetLoader):
 
     def __init__(self, build_targets: Dict[str, BuildTarget]):
         self.build_targets = build_targets
 
-    @override
     def load_available_build_targets(self):
         return self.build_targets
 
