@@ -3,15 +3,18 @@ import unittest
 from typing import Dict
 from unittest.mock import MagicMock, call
 
-from build_fluidicity_jdglazer.builder import BuildTargetLoader, Builder, BuildException, BuildTarget
+from build_fluidicity_jdglazer.builder import Builder, BuildException
+from build_fluidicity_jdglazer.loaders import BuildTargetLoader
+from build_fluidicity_jdglazer.targets import BuildTarget
 
 class MockBuildTargetLoader(BuildTargetLoader):
 
     def __init__(self, build_targets: Dict[str, BuildTarget]):
+        super().__init__()
         self.build_targets = build_targets
 
-    def load_available_build_targets(self):
-        return self.build_targets
+    def get_build_target(self, name: str):
+        return self.build_targets.get(name)
 
 class TestBuilder(unittest.TestCase):
 
@@ -193,30 +196,46 @@ class TestBuilder(unittest.TestCase):
         mock.assert_has_calls(calls=expected_calls, any_order=False)
         mock.build_func_six.assert_not_called()
 
+    def test_cleanup_runs_in_the_correct_order(self):
+        mock = MagicMock()
 
-class TestBuildTarget(unittest.TestCase):
+        mock.clean_func_one.return_value = None
+        mock.clean_func_two.return_value = None
+        mock.clean_func_three.return_value = None
+        mock.clean_func_four.return_value = None
+        mock.clean_func_five.return_value = None
+        mock.clean_func_six.return_value = None
 
-    def test_values_set(self):
-        TARGET_NAME = "my-target"
-        DESCRIPTION = "this is my description"
-        target = BuildTarget(build=lambda: None, name=TARGET_NAME, description=DESCRIPTION)
+        BUILD_TARGETS = {
+            "one": BuildTarget(build=lambda: None, cleanup=mock.clean_func_one, name="one", dependency_names=["two", "three"]),
+            "two": BuildTarget(build=lambda: None, cleanup=mock.clean_func_two, name="two"),
+            "three": BuildTarget(build=lambda: None, cleanup=mock.clean_func_three, name="three", dependency_names=["four", "two"]),
+            "four": BuildTarget(build=lambda: None, cleanup=mock.clean_func_four, name="four", dependency_names=["two"]),
+            "five": BuildTarget(build=lambda: None, cleanup=mock.clean_func_five, name="five", dependency_names=["three"]),
+            "six": BuildTarget(build=lambda: None, cleanup=mock.clean_func_six, name="six")
+        }
 
-        self.assertEqual(target.name, TARGET_NAME)
-        self.assertEqual(target.description, DESCRIPTION)
+        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
 
-    def test_build_function_called(self):
-        build_func_mock = MagicMock()
-        target = BuildTarget(build=build_func_mock, name="")
-        target.build()
-        build_func_mock.assert_called_once()
+        builder = Builder(targets_to_run=["one", "five"], target_loader=mock_target_loader)
+        builder.clean()
 
-    def test_cleanup_function_called_on_exception(self):
-        build_func_mock = MagicMock(side_effect=Exception(""))
-        cleanup_func_mock = MagicMock()
-        target = BuildTarget(build=build_func_mock, cleanup=cleanup_func_mock, name="")
-        self.assertRaises(Exception, target.build)
-        cleanup_func_mock.assert_called_once()
+        expected_calls = [
+            call.clean_func_five(),
+            call.clean_func_three(),
+            call.clean_func_two(),
+            call.clean_func_four(),
+            call.clean_func_two(),
+            call.clean_func_one(),
+            call.clean_func_three(),
+            call.clean_func_two(),
+            call.clean_func_four(),
+            call.clean_func_two(),
+            call.clean_func_two()
+        ]
 
+        mock.assert_has_calls(calls=expected_calls, any_order=False)
+        mock.clean_func_six.assert_not_called()
 
 if __name__ == '__main__':
     unittest.main()

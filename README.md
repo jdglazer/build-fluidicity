@@ -19,55 +19,65 @@ Users define the following for each build target:
 * __cleanup logic__ (optional) - a function run in the case of a build failure
 * __dependencies__ (optional) - a list of names of targets that should be run before the current target
 
-## Basic Example
+## Examples
+
+Exmaple files are located in examples folder and can be run with the following command (linux):
+```bash
+  PYTHON_PATH=src python examples/simplest_example.py
+```
+### Simplest Example [(simplest_example.py)](examples/simplest_example.py)
 
 ```python
-from build_fluidicity_jdglazer.builder import build_target_loader, Builder, BuildTarget
+from build_fluidicity_jdglazer.builder import Builder
+from build_fluidicity_jdglazer.targets import BuildTarget
+from build_fluidicity_jdglazer.loaders import build_target_loader
 
 # define target one
 def define_target_one() -> BuildTarget:
-
     def build() -> None:
         print("Build step one entered")
 
-    return BuildTarget(name = "one",
-                       build = build)
+    return BuildTarget(name="one",
+                       build=build)
+
 
 # define target two
 def define_target_two() -> BuildTarget:
-
     def build() -> None:
         print("Build step two entered")
-    
-    return BuildTarget(name = "two",
-                       build = build,
-                       dependency_names= ["one"] )
+
+    return BuildTarget(name="two",
+                       build=build,
+                       dependency_names=["one"])
+
 
 if __name__ == '__main__':
     # add build targets to loader
-    build_target_loader.add(define_target_one())
-    build_target_loader.add(define_target_two())
+    build_target_loader.add_target(define_target_one())
+    build_target_loader.add_target(define_target_two())
 
     # create builder and tell it to run build target named 'two'
-    builder = Builder(targets_to_run=["two"], build_target_loader=build_target_loader)
-    
+    builder = Builder(targets_to_run=["two"], target_loader=build_target_loader, verbose=True)
+
     # run build
     builder.run()
 ```
 
 Notice that this example provided is the bare minimum needed to run build target 'two' and its dependency, 'one'. This example is provided to show the general setup. Below is a more sophisticated example.
 
-## Extended Example
+### Extended Example [(simple_example.py)](examples/simple_example.py)
 
 ```python
 import os
-from build_fluidicity_jdglazer.builder import build_target_loader, Builder, BuildTarget
+from build_fluidicity_jdglazer.builder import Builder
+from build_fluidicity_jdglazer.targets import BuildTarget
+from build_fluidicity_jdglazer.loaders import build_target_loader
 
 readme_file_name = "readme.md"
 
+
 # define build target 'readme_created'
 def define_target_create_readme_file() -> BuildTarget:
-
     def build() -> None:
         # errors raised are allowed to escape as this is how the framework determines failure of the step
         with open(readme_file_name, 'w') as f:
@@ -81,11 +91,12 @@ def define_target_create_readme_file() -> BuildTarget:
         # if the file already exists we don't want to do anything
         return os.path.exists(readme_file_name)
 
-    return BuildTarget(name = "create_readme",
-                       description = "Creates readme file",
-                       build = build,
-                       completion_test = complete,
-                       cleanup = cleanup)
+    return BuildTarget(name="create_readme",
+                       description="Creates readme file",
+                       build=build,
+                       completion_test=complete,
+                       cleanup=cleanup)
+
 
 # define build target 'set_license'
 def define_target_set_license_type() -> BuildTarget:
@@ -100,7 +111,7 @@ def define_target_set_license_type() -> BuildTarget:
                 return license_str in f.read()
         except:
             return False
-        
+
     def _remove_license_str() -> None:
         with open(readme_file_name, 'r') as f:
             readme_txt = f.read()
@@ -112,7 +123,7 @@ def define_target_set_license_type() -> BuildTarget:
     def build() -> None:
         with open(file_name, 'w') as f:
             f.write(license_type)
-            
+
         with open(readme_file_name, 'a') as f:
             f.write(license_str)
 
@@ -122,26 +133,26 @@ def define_target_set_license_type() -> BuildTarget:
             os.remove(file_name)
             _remove_license_str()
         except:
-            pass # swallow error, best effort
+            pass  # swallow error, best effort
 
     def complete() -> bool:
         return os.path.exists(file_name) and _is_license_str_set()
-    
 
-    return BuildTarget(name = "set_license",
-                       description = "Creates license file and sets license in readme",
-                       build = build,
-                       completion_test = complete, 
-                       cleanup = cleanup, 
-                       dependency_names= ["create_readme"] )
+    return BuildTarget(name="set_license",
+                       description="Creates license file and sets license in readme",
+                       build=build,
+                       completion_test=complete,
+                       cleanup=cleanup,
+                       dependency_names=["create_readme"])
+
 
 if __name__ == '__main__':
     # add build targets to loader
-    build_target_loader.add(define_target_create_readme_file())
-    build_target_loader.add(define_target_set_license_type())
+    build_target_loader.add_target(define_target_create_readme_file())
+    build_target_loader.add_target(define_target_set_license_type())
 
     # create builder and tell it to run build target named 'two'
-    builder = Builder(targets_to_run=["set_license"], build_target_loader=build_target_loader)
+    builder = Builder(targets_to_run=["set_license"], target_loader=build_target_loader, verbose=True)
 
     # run build
     builder.run()
@@ -152,3 +163,10 @@ The above example creates a readme file and then creates a license file adding t
 Some important notes:
 * Exception Handling - We allow exceptions to propagate out of build function. This helps the framework decide that the build has failed. On the other hand, we swallow exceptions in completion tests and cleanup functions. We take the perspective that exceptions in determining completion mean it's not complete and exception in cleanup should correspond to cleanup already being done. If we want to stop cleanup on failure of a cleanup step, we can allow the exception to propagate out of cleanup functions.
 * Organization - we define parent functions to return each build target. This is primarily an organization and scoping tool. This are not necessary strictly speaking.
+
+### Cleanup Example [(clean_example.py)](examples/clean_example.py)
+```python
+    # everything above here would look exactly like the examples above
+    # We replace the builder.run() with a call to clean()
+    builder.clean()
+```
