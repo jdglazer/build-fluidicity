@@ -28,12 +28,12 @@ class TestBuilder(unittest.TestCase):
     def test_no_duplicate_targets_allowed(self):
         target_names = TestBuilder.TARGET_NAME_BASE + ["convertfiles"]
 
-        self.assertRaises(BuildException, Builder([], MockBuildTargetLoader({}))._verify_targets_to_run, target_names)
+        self.assertRaises(BuildException, Builder([], MockBuildTargetLoader({}))._get_and_verify_targets_to_run, target_names)
 
     def test_top_level_target_existence_check(self):
         tree = Builder([], MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE))
 
-        self.assertRaises(BuildException, tree._verify_targets_to_run, TestBuilder.TARGET_NAME_BASE)
+        self.assertRaises(BuildException, tree._get_and_verify_targets_to_run, TestBuilder.TARGET_NAME_BASE)
 
     def test_circular_dependency_check(self):
         loaded_targets = TestBuilder.LOADED_TARGET_BASE.copy()
@@ -41,6 +41,15 @@ class TestBuilder(unittest.TestCase):
         loaded_targets["downloadfiles"]._dependency_names = ["createdirs"]
 
         self.assertRaises(BuildException, Builder, ["createdirs"], MockBuildTargetLoader(loaded_targets))
+
+    def test_get_targets_succeeds(self):
+        loader_mock = MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE)
+        # we'll just collect all build target names our loader knows about
+        target_names = [bt.name for name, bt in TestBuilder.LOADED_TARGET_BASE.items()]
+        expected_target_list = [bt for name, bt in TestBuilder.LOADED_TARGET_BASE.items()]
+
+        targets_loaded = Builder([], loader_mock)._get_and_verify_targets_to_run(target_names)
+        self.assertListEqual(expected_target_list, targets_loaded)
 
     def test_dependency_target_does_not_exist_check(self):
         loaded_targets = TestBuilder.LOADED_TARGET_BASE.copy()
