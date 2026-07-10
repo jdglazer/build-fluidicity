@@ -5,7 +5,7 @@
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 ## Requirements
 
-* **Python Version:** Python >=3.10
+* **Python Version:** >=3.10
 
 ## General Description
 
@@ -170,3 +170,58 @@ Some important notes:
     # We replace the builder.run() with a call to clean()
     builder.clean()
 ```
+
+## Building Locally
+### Pre-requisites
+A running install of docker is necessary to continue with the below steps.
+
+### Bash Helper Utility
+This project is build on a python docker container. The image for this container can be build from the Dockerfile in the root directory of the project. A script called [build.sh](build.sh) is included to help make all build related tasks easier.
+```bash
+bash> build.sh -h
+Usage: ./build.sh [options]
+  -h, --help          print this usage message
+  -i, --dockerimage   build docker image
+  -r, --runcontainer  run docker container bash command line
+  -t, --test          run python tests
+  -b, --build         run python package build
+  -c, --clean         clean docker system cache (docker prune)
+bash>
+```
+
+### Building Docker Image
+The first step should be to build a docker image. This only needs to be done one time unless you are making edits to the [Dockerfile](Dockerfile).
+```bash
+bash> build.sh -i
+```
+
+### Running Tests
+Once the image is built, we can run the python unittests as follows:
+
+```bash
+bash> build.sh -t
+```
+
+This will run tests on a docker container and show the results.
+
+### Building Install Packages
+To build install packages, we can run the following:
+
+```bash
+bash> build.sh -b
+```
+The docker container build environment shares the project root directory as a volume and so generated build packages will show up in the local project root directory under [dist](dist) subdirectory.
+
+### Accessing the Build Container Commandline
+To get to a bash command line in the docker container, you can run the following:
+
+```bash
+bash> build.sh -r
+Running bash on docker container...
+root@46957618af91:/build-fluidicity#
+```
+
+This is useful for extending or troubleshooting tests as the full project structure is synced to the working directory on the container. Thus, changes made on the local machine are immediately visible on the container.
+
+### Building on Windows
+If you wish to run build on windows, it is suggested you look at the contents of the [build.sh](build.sh) script. Many of the commands will be the same in the windows command prompt.

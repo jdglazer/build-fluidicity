@@ -1,4 +1,3 @@
-import sys
 import unittest
 from typing import Dict
 from unittest.mock import MagicMock, call
@@ -16,6 +15,9 @@ class MockBuildTargetLoader(BuildTargetLoader):
     def get_build_target(self, name: str):
         return self.build_targets.get(name)
 
+    def get_all_targets(self):
+        return self.build_targets.values()
+
 class TestBuilder(unittest.TestCase):
 
     TARGET_NAME_BASE = ["createdirs", "downloadfiles", "convertfiles", "runtilemaker"]
@@ -28,10 +30,10 @@ class TestBuilder(unittest.TestCase):
     def test_no_duplicate_targets_allowed(self):
         target_names = TestBuilder.TARGET_NAME_BASE + ["convertfiles"]
 
-        self.assertRaises(BuildException, Builder([], MockBuildTargetLoader({}))._get_and_verify_targets_to_run, target_names)
+        self.assertRaises(BuildException, Builder( MockBuildTargetLoader({}), [])._get_and_verify_targets_to_run, target_names)
 
     def test_top_level_target_existence_check(self):
-        tree = Builder([], MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE))
+        tree = Builder(MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE), [])
 
         self.assertRaises(BuildException, tree._get_and_verify_targets_to_run, TestBuilder.TARGET_NAME_BASE)
 
@@ -40,7 +42,7 @@ class TestBuilder(unittest.TestCase):
         loaded_targets["createdirs"]._dependency_names = ["downloadfiles", "convertfiles"]
         loaded_targets["downloadfiles"]._dependency_names = ["createdirs"]
 
-        self.assertRaises(BuildException, Builder, ["createdirs"], MockBuildTargetLoader(loaded_targets))
+        self.assertRaises(BuildException, Builder, MockBuildTargetLoader(loaded_targets), ["createdirs"])
 
     def test_get_targets_succeeds(self):
         loader_mock = MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE)
@@ -48,15 +50,15 @@ class TestBuilder(unittest.TestCase):
         target_names = [bt.name for name, bt in TestBuilder.LOADED_TARGET_BASE.items()]
         expected_target_list = [bt for name, bt in TestBuilder.LOADED_TARGET_BASE.items()]
 
-        targets_loaded = Builder([], loader_mock)._get_and_verify_targets_to_run(target_names)
+        targets_loaded = Builder(loader_mock, [])._get_and_verify_targets_to_run(target_names)
         self.assertListEqual(expected_target_list, targets_loaded)
 
-    def test_dependency_target_does_not_exist_check(self):
+    def test_dependency_target_does_not_exist(self):
         loaded_targets = TestBuilder.LOADED_TARGET_BASE.copy()
         loaded_targets["createdirs"]._dependency_names = ["downloadfiles", "convertfiles"]
         del loaded_targets["convertfiles"]
 
-        self.assertRaises(BuildException, Builder, ["createdirs"], MockBuildTargetLoader(loaded_targets))
+        self.assertRaises(BuildException, Builder, MockBuildTargetLoader(loaded_targets), ["createdirs"])
 
     def test_load_build_success(self):
         loaded_targets = TestBuilder.LOADED_TARGET_BASE.copy()
@@ -65,7 +67,7 @@ class TestBuilder(unittest.TestCase):
 
         tree = None
         try:
-            tree = Builder(["createdirs"], MockBuildTargetLoader(loaded_targets))
+            tree = Builder( MockBuildTargetLoader(loaded_targets), ["createdirs"])
         except:
             pass
 
@@ -85,7 +87,7 @@ class TestBuilder(unittest.TestCase):
 
         mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
 
-        builder = Builder(targets_to_run=["one", "two", "three"], target_loader=mock_target_loader)
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
         builder.run()
 
         mock.build_func_one.assert_called_once()
@@ -107,7 +109,7 @@ class TestBuilder(unittest.TestCase):
 
         mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
 
-        builder = Builder(targets_to_run=["one", "two", "three"], target_loader=mock_target_loader)
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
         builder.run()
 
         mock.build_func_one.assert_called_once()
@@ -135,7 +137,7 @@ class TestBuilder(unittest.TestCase):
 
         mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
 
-        builder = Builder(targets_to_run=["one", "two", "three"], target_loader=mock_target_loader)
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
         builder.run()
 
         mock.cleanup_func_one.assert_called_once()
@@ -163,7 +165,7 @@ class TestBuilder(unittest.TestCase):
 
         mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
 
-        builder = Builder(targets_to_run=["one", "two", "three"], target_loader=mock_target_loader)
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
         builder.run()
 
         mock.cleanup_func_one.assert_not_called()
@@ -191,7 +193,7 @@ class TestBuilder(unittest.TestCase):
 
         mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
 
-        builder = Builder(targets_to_run=["one", "five"], target_loader=mock_target_loader)
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
         builder.run()
 
         expected_calls = [
@@ -226,7 +228,7 @@ class TestBuilder(unittest.TestCase):
 
         mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
 
-        builder = Builder(targets_to_run=["one", "five"], target_loader=mock_target_loader)
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
         builder.clean()
 
         expected_calls = [
@@ -245,6 +247,67 @@ class TestBuilder(unittest.TestCase):
 
         mock.assert_has_calls(calls=expected_calls, any_order=False)
         mock.clean_func_six.assert_not_called()
+
+    def test_dry_run_does_not_run_build_functions(self):
+        mock = MagicMock()
+
+        mock.build_func_one.return_value = None
+        mock.build_func_two.return_value = None
+        mock.build_func_three.return_value = None
+        mock.build_func_four.return_value = None
+        mock.build_func_five.return_value = None
+
+        BUILD_TARGETS = {
+            "one": BuildTarget(build=mock.build_func_one, name="one", dependency_names=["two", "three"]),
+            "two": BuildTarget(build=mock.build_func_two, name="two"),
+            "three": BuildTarget(build=mock.build_func_three, name="three", dependency_names=["four"]),
+            "four": BuildTarget(build=mock.build_func_four, name="four"),
+            "five": BuildTarget(build=mock.build_func_five, name="five")
+        }
+
+        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
+
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
+        builder.dry_run()
+
+        mock.build_func_one.assert_not_called()
+        mock.build_func_two.assert_not_called()
+        mock.build_func_three.assert_not_called()
+        mock.build_func_four.assert_not_called()
+        mock.build_func_five.assert_not_called()
+
+    def test_list_targets_returns_strings(self):
+        mock = MagicMock()
+
+        mock.build_func_one.return_value = None
+        mock.build_func_two.return_value = None
+        mock.build_func_three.return_value = None
+        mock.build_func_four.return_value = None
+        mock.build_func_five.return_value = None
+
+        BUILD_TARGETS = {
+            "one": BuildTarget(build=mock.build_func_one, name="one", dependency_names=["two", "three"]),
+            "two": BuildTarget(build=mock.build_func_two, name="two"),
+            "three": BuildTarget(build=mock.build_func_three, name="three", dependency_names=["four"]),
+            "four": BuildTarget(build=mock.build_func_four, name="four"),
+            "five": BuildTarget(build=mock.build_func_five, name="five")
+        }
+
+        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
+
+        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
+        non_verbose = builder.list_targets()
+        verbose = builder.list_targets(verbose=True)
+
+        # non-verbose and verbose produce something
+        self.assertIsNotNone(non_verbose)
+        self.assertIsNotNone(verbose)
+
+        # verbose produces more than non-verbose
+        self.assertGreater(len(verbose), len(non_verbose))
+
+    def test_handle(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()

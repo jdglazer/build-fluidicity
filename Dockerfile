@@ -16,6 +16,6 @@ RUN apt-get update && \
 
 RUN pip install build hatchling pytest pytest-cov
 
-ENTRYPOINT ["/bin/bash"]
-
 WORKDIR /build-fluidicity
+
+ENTRYPOINT ["/bin/bash"]

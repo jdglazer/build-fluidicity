@@ -1,11 +1,23 @@
 import logging
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict, Any, Protocol
 from urllib.request import urlopen
 from zipfile import ZipFile, ZipInfo
 
 
 def initialize_logger() -> None:
-    logging.basicConfig()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(target)s] %(message)s",
+        handlers=[logging.StreamHandler()]
+    )
+
+def log(message: str, build_target_name: Optional[str] = None) -> None:
+    target_name = build_target_name if build_target_name else "engine"
+    logging.info(message, extra={"target": target_name})
+
+def log_exception(message: str, build_target_name: Optional[str] = None) -> None:
+    target_name = build_target_name if build_target_name else "engine"
+    logging.exception(message, extra={"target": target_name})
 
 def iterate_zip_entries(zip_path: str, on_entry: Callable[[ZipFile, ZipInfo], None]) -> None:
     with ZipFile(zip_path) as zf:

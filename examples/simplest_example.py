@@ -27,7 +27,7 @@ if __name__ == '__main__':
     build_target_loader.add_target(define_target_two())
 
     # create builder and tell it to run build target named 'two'
-    builder = Builder(targets_to_run=["two"], target_loader=build_target_loader, verbose=True)
+    builder = Builder(target_loader=build_target_loader, targets_to_run=["set_license"])
 
     # run build
     builder.run()

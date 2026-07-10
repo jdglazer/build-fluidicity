@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from typing import Dict, Optional, Iterable
 
 from build_fluidicity_jdglazer.targets import BuildTarget
 
@@ -12,6 +12,10 @@ class BuildTargetLoader(ABC):
     @abstractmethod
     def get_build_target(self, name: str) -> Optional[BuildTarget]:
         return
+
+    @abstractmethod
+    def get_all_targets(self) -> Iterable[BuildTarget]:
+        return []
 
 
 class BasicBuildTargetLoader(BuildTargetLoader):
@@ -27,6 +31,9 @@ class BasicBuildTargetLoader(BuildTargetLoader):
     # TO DO: add @override when minimum python version becomes 3.12
     def get_build_target(self, name: str) -> Optional[BuildTarget]:
         return self._build_targets.get(name, None)
+
+    def get_all_targets(self) -> Iterable[BuildTarget]:
+        return self._build_targets.values()
 
 
 # static variable to be referenced across project where targets are defined
