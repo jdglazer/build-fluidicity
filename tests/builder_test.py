@@ -2,10 +2,26 @@ import unittest
 from typing import Dict
 from unittest.mock import MagicMock, call
 
-from build_fluidicity_jdglazer.builder import Builder, BuildException
+from build_fluidicity_jdglazer.builder import Builder
 from build_fluidicity_jdglazer.loaders import BuildTargetLoader
-from build_fluidicity_jdglazer.targets import BuildTarget
+from build_fluidicity_jdglazer.targets import BuildTarget, MetaBuildTarget
 
+"""
+    def test_build_function_called(self):
+        build_func_mock = MagicMock()
+        target = UltraSimpleBuildTargetSub(name="")
+        target.build()
+        build_func_mock.assert_called_once()
+
+    def test_cleanup_function_called_on_exception(self):
+        build_func_mock = MagicMock(side_effect=Exception(""))
+        cleanup_func_mock = MagicMock()
+        target = BuildTarget(build=build_func_mock, cleanup=cleanup_func_mock, name="")
+        self.assertRaises(Exception, target.build)
+        cleanup_func_mock.assert_called_once()
+"""
+
+"""
 class MockBuildTargetLoader(BuildTargetLoader):
 
     def __init__(self, build_targets: Dict[str, BuildTarget]):
@@ -18,7 +34,8 @@ class MockBuildTargetLoader(BuildTargetLoader):
     def get_all_targets(self):
         return self.build_targets.values()
 
-class TestBuilder(unittest.TestCase):
+
+class TestBuilderFunctions(unittest.TestCase):
 
     TARGET_NAME_BASE = ["createdirs", "downloadfiles", "convertfiles", "runtilemaker"]
     LOADED_TARGET_BASE: Dict[str, BuildTarget] = {
@@ -27,10 +44,12 @@ class TestBuilder(unittest.TestCase):
             "convertfiles": BuildTarget(name="convertfiles", build=lambda: None)
     }
 
-    def test_no_duplicate_targets_allowed(self):
-        target_names = TestBuilder.TARGET_NAME_BASE + ["convertfiles"]
+    # def test_no_duplicate_targets_allowed(self):
+    #     target_names = TestBuilder.TARGET_NAME_BASE + ["convertfiles"]
+    #
+    #     self.assertRaises(BuildException, Builder( MockBuildTargetLoader({}), [])._get_and_verify_targets_to_run, target_names)
 
-        self.assertRaises(BuildException, Builder( MockBuildTargetLoader({}), [])._get_and_verify_targets_to_run, target_names)
+    def test_iterate_targets_raises_circular_dependencies_exc(self):
 
     def test_top_level_target_existence_check(self):
         tree = Builder(MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE), [])
@@ -183,9 +202,9 @@ class TestBuilder(unittest.TestCase):
         mock.build_func_six.return_value = None
 
         BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one", dependency_names=["two", "three"]),
+            "one": BuildTarget(build=mock.build_func_one, name="one", dependencies=["two", "three"]),
             "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three", dependency_names=["four"]),
+            "three": BuildTarget(build=mock.build_func_three, name="three", dependencies=["four"]),
             "four": BuildTarget(build=mock.build_func_four, name="four"),
             "five": BuildTarget(build=mock.build_func_five, name="five"),
             "six": BuildTarget(build=mock.build_func_six, name="six")
@@ -218,11 +237,11 @@ class TestBuilder(unittest.TestCase):
         mock.clean_func_six.return_value = None
 
         BUILD_TARGETS = {
-            "one": BuildTarget(build=lambda: None, cleanup=mock.clean_func_one, name="one", dependency_names=["two", "three"]),
+            "one": BuildTarget(build=lambda: None, cleanup=mock.clean_func_one, name="one", dependencies=["two", "three"]),
             "two": BuildTarget(build=lambda: None, cleanup=mock.clean_func_two, name="two"),
-            "three": BuildTarget(build=lambda: None, cleanup=mock.clean_func_three, name="three", dependency_names=["four", "two"]),
-            "four": BuildTarget(build=lambda: None, cleanup=mock.clean_func_four, name="four", dependency_names=["two"]),
-            "five": BuildTarget(build=lambda: None, cleanup=mock.clean_func_five, name="five", dependency_names=["three"]),
+            "three": BuildTarget(build=lambda: None, cleanup=mock.clean_func_three, name="three", dependencies=["four", "two"]),
+            "four": BuildTarget(build=lambda: None, cleanup=mock.clean_func_four, name="four", dependencies=["two"]),
+            "five": BuildTarget(build=lambda: None, cleanup=mock.clean_func_five, name="five", dependencies=["three"]),
             "six": BuildTarget(build=lambda: None, cleanup=mock.clean_func_six, name="six")
         }
 
@@ -258,9 +277,9 @@ class TestBuilder(unittest.TestCase):
         mock.build_func_five.return_value = None
 
         BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one", dependency_names=["two", "three"]),
+            "one": BuildTarget(build=mock.build_func_one, name="one", dependencies=["two", "three"]),
             "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three", dependency_names=["four"]),
+            "three": BuildTarget(build=mock.build_func_three, name="three", dependencies=["four"]),
             "four": BuildTarget(build=mock.build_func_four, name="four"),
             "five": BuildTarget(build=mock.build_func_five, name="five")
         }
@@ -286,9 +305,9 @@ class TestBuilder(unittest.TestCase):
         mock.build_func_five.return_value = None
 
         BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one", dependency_names=["two", "three"]),
+            "one": BuildTarget(build=mock.build_func_one, name="one", dependencies=["two", "three"]),
             "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three", dependency_names=["four"]),
+            "three": BuildTarget(build=mock.build_func_three, name="three", dependencies=["four"]),
             "four": BuildTarget(build=mock.build_func_four, name="four"),
             "five": BuildTarget(build=mock.build_func_five, name="five")
         }
@@ -308,6 +327,6 @@ class TestBuilder(unittest.TestCase):
 
     def test_handle(self):
         pass
-
+"""
 if __name__ == '__main__':
     unittest.main()

@@ -18,7 +18,7 @@ def define_target_two() -> BuildTarget:
 
     return BuildTarget(name="two",
                        build=build,
-                       dependency_names=["one"])
+                       dependencies=["one"])
 
 
 if __name__ == '__main__':

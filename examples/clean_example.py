@@ -55,7 +55,7 @@ def define_target_set_license_type() -> BuildTarget:
                        description="Creates license file and sets license in readme",
                        build=build,
                        cleanup=cleanup,
-                       dependency_names=["create_readme"])
+                       dependencies=["create_readme"])
 
 
 if __name__ == '__main__':

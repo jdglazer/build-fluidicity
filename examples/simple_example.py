@@ -73,7 +73,7 @@ def define_target_set_license_type() -> BuildTarget:
                        build=build,
                        completion_test=complete,
                        cleanup=cleanup,
-                       dependency_names=["create_readme"])
+                       dependencies=["create_readme"])
 
 
 if __name__ == '__main__':

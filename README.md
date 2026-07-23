@@ -32,6 +32,7 @@ from build_fluidicity_jdglazer.builder import Builder
 from build_fluidicity_jdglazer.targets import BuildTarget
 from build_fluidicity_jdglazer.loaders import build_target_loader
 
+
 # define target one
 def define_target_one() -> BuildTarget:
     def build() -> None:
@@ -48,7 +49,7 @@ def define_target_two() -> BuildTarget:
 
     return BuildTarget(name="two",
                        build=build,
-                       dependency_names=["one"])
+                       dependencies=["one"])
 
 
 if __name__ == '__main__':
@@ -143,7 +144,7 @@ def define_target_set_license_type() -> BuildTarget:
                        build=build,
                        completion_test=complete,
                        cleanup=cleanup,
-                       dependency_names=["create_readme"])
+                       dependencies=["create_readme"])
 
 
 if __name__ == '__main__':
