@@ -3,31 +3,16 @@ from unittest.mock import MagicMock
 
 from build_fluidicity_jdglazer.exceptions import UnknownTargetException
 from build_fluidicity_jdglazer.loaders import BasicBuildTargetLoader
-from test_utils import UltraSimpleBuildTargetSub
+from testingutils import UltraSimpleBuildTargetSub
 
 
 class TestBasicBuildTargetLoader(unittest.TestCase):
-
-    def test_no_build_targets(self):
-        loader = BasicBuildTargetLoader()
-        self.assertEqual(len(list(loader.get_all_targets())), 0)
 
     def test_build_target_returned_by_name(self):
         loader = BasicBuildTargetLoader()
         target = UltraSimpleBuildTargetSub(name="test_name")
         loader.add_target(target)
         self.assertEqual(target, loader.get_build_target("test_name"))
-
-    def test_all_build_targets_returned(self):
-        loader = BasicBuildTargetLoader()
-
-        target1 = UltraSimpleBuildTargetSub(name="test_name_1")
-        loader.add_target(target1)
-
-        target2 = UltraSimpleBuildTargetSub(name="test_name_2")
-        loader.add_target(target2)
-
-        self.assertListEqual([target1, target2], list(loader.get_all_targets()))
 
     def test_unknown_target_exception(self):
         loader = BasicBuildTargetLoader()

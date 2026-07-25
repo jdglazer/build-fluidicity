@@ -1,9 +1,9 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from build_fluidicity_jdglazer.targets import DirectoryCreate, ExtractZip, DownloadFile, MetaBuildTarget, \
     TargetLifecycle
-from test_utils import UltraSimpleBuildTargetSub
+from testingutils import UltraSimpleBuildTargetSub
 
 
 class TestBuildTarget(unittest.TestCase):
@@ -13,13 +13,14 @@ class TestBuildTarget(unittest.TestCase):
         description = "this is my description"
         target = UltraSimpleBuildTargetSub(name=target_name, description=description)
 
-        self.assertEqual(target.name, target_name)
-        self.assertEqual(target.description, description)
+        self.assertEqual(target.get_name(), target_name)
+        self.assertEqual(target.get_description(), description)
 
     def test_expected_super_types_present(self):
         target = UltraSimpleBuildTargetSub(name="test")
         self.assertIsInstance(target, MetaBuildTarget)
         self.assertIsInstance(target, TargetLifecycle)
+
 
 class TestDirectoryCreate(unittest.TestCase):
 

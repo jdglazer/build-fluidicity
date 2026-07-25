@@ -1,332 +1,213 @@
 import unittest
-from typing import Dict
+from typing import Optional
 from unittest.mock import MagicMock, call
 
-from build_fluidicity_jdglazer.builder import Builder
-from build_fluidicity_jdglazer.loaders import BuildTargetLoader
-from build_fluidicity_jdglazer.targets import BuildTarget, MetaBuildTarget
-
-"""
-    def test_build_function_called(self):
-        build_func_mock = MagicMock()
-        target = UltraSimpleBuildTargetSub(name="")
-        target.build()
-        build_func_mock.assert_called_once()
-
-    def test_cleanup_function_called_on_exception(self):
-        build_func_mock = MagicMock(side_effect=Exception(""))
-        cleanup_func_mock = MagicMock()
-        target = BuildTarget(build=build_func_mock, cleanup=cleanup_func_mock, name="")
-        self.assertRaises(Exception, target.build)
-        cleanup_func_mock.assert_called_once()
-"""
-
-"""
-class MockBuildTargetLoader(BuildTargetLoader):
-
-    def __init__(self, build_targets: Dict[str, BuildTarget]):
-        super().__init__()
-        self.build_targets = build_targets
-
-    def get_build_target(self, name: str):
-        return self.build_targets.get(name)
-
-    def get_all_targets(self):
-        return self.build_targets.values()
+from build_fluidicity_jdglazer.builder import BuilderImpl
+from build_fluidicity_jdglazer.exceptions import BuildException
 
 
-class TestBuilderFunctions(unittest.TestCase):
+class TestBuilderImpl(unittest.TestCase):
 
-    TARGET_NAME_BASE = ["createdirs", "downloadfiles", "convertfiles", "runtilemaker"]
-    LOADED_TARGET_BASE: Dict[str, BuildTarget] = {
-            "createdirs": BuildTarget(name="createdirs", build=lambda: None),
-            "downloadfiles": BuildTarget(name="downloadfiles", build=lambda: None),
-            "convertfiles": BuildTarget(name="convertfiles", build=lambda: None)
-    }
+    def setUp(self):
+        self._compiler_mock = MagicMock()
+        self._compiler_mock.result = MagicMock()
+        self._compiler_mock.result.return_value = []
 
-    # def test_no_duplicate_targets_allowed(self):
-    #     target_names = TestBuilder.TARGET_NAME_BASE + ["convertfiles"]
-    #
-    #     self.assertRaises(BuildException, Builder( MockBuildTargetLoader({}), [])._get_and_verify_targets_to_run, target_names)
+        self._builder = BuilderImpl(self._compiler_mock)
 
-    def test_iterate_targets_raises_circular_dependencies_exc(self):
+    def addTarget(self,
+                  do_build_return = True,
+                  do_build_effect: Optional[Exception] = None,
+                  do_completion_return = False,
+                  do_cleanup_effect: Optional[Exception] = None,
+                  depth = 1) -> MagicMock:
 
-    def test_top_level_target_existence_check(self):
-        tree = Builder(MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE), [])
+        do_build = MagicMock()
+        do_build.return_value = do_build_return
+        if do_build_effect is not None:
+            do_build.side_effect = do_build_effect
 
-        self.assertRaises(BuildException, tree._get_and_verify_targets_to_run, TestBuilder.TARGET_NAME_BASE)
+        do_completion_test = MagicMock()
+        do_completion_test.return_value = do_completion_return
 
-    def test_circular_dependency_check(self):
-        loaded_targets = TestBuilder.LOADED_TARGET_BASE.copy()
-        loaded_targets["createdirs"]._dependency_names = ["downloadfiles", "convertfiles"]
-        loaded_targets["downloadfiles"]._dependency_names = ["createdirs"]
+        do_cleanup = MagicMock()
+        if do_cleanup_effect is not None:
+            do_cleanup.side_effect = do_cleanup_effect
 
-        self.assertRaises(BuildException, Builder, MockBuildTargetLoader(loaded_targets), ["createdirs"])
+        target = MagicMock()
+        target.do_build = do_build
+        target.do_completion_test = do_completion_test
+        target.do_cleanup = do_cleanup
 
-    def test_get_targets_succeeds(self):
-        loader_mock = MockBuildTargetLoader(TestBuilder.LOADED_TARGET_BASE)
-        # we'll just collect all build target names our loader knows about
-        target_names = [bt.name for name, bt in TestBuilder.LOADED_TARGET_BASE.items()]
-        expected_target_list = [bt for name, bt in TestBuilder.LOADED_TARGET_BASE.items()]
+        self._compiler_mock.result.return_value.append((target, depth))
 
-        targets_loaded = Builder(loader_mock, [])._get_and_verify_targets_to_run(target_names)
-        self.assertListEqual(expected_target_list, targets_loaded)
+        return target
 
-    def test_dependency_target_does_not_exist(self):
-        loaded_targets = TestBuilder.LOADED_TARGET_BASE.copy()
-        loaded_targets["createdirs"]._dependency_names = ["downloadfiles", "convertfiles"]
-        del loaded_targets["convertfiles"]
+    def test_build_runs_targets_completion_check_and_build_methods_only(self):
+        target = self.addTarget(do_build_return = True,
+                       do_completion_return = False)
 
-        self.assertRaises(BuildException, Builder, MockBuildTargetLoader(loaded_targets), ["createdirs"])
+        # verify do_build return transmitted
+        self.assertTrue(self._builder._build_target(target))
 
-    def test_load_build_success(self):
-        loaded_targets = TestBuilder.LOADED_TARGET_BASE.copy()
-        loaded_targets["createdirs"]._dependency_names = ["downloadfiles", "convertfiles"]
-        loaded_targets["downloadfiles"]._dependency_names = ["convertfiles"]
+        target.do_completion_test.assert_called_once()
+        target.do_build.assert_called_once()
+        target.do_cleanup.assert_not_called()
 
-        tree = None
+    def test_build_does_not_run_build_nor_clean_methods_on_true_completion_test(self):
+        target = self.addTarget(do_completion_return=True)
+
+        # verify false returned when target not run due to already being complete
+        self.assertFalse(self._builder._build_target(target))
+
+        target.do_completion_test.assert_called_once()
+        target.do_build.assert_not_called()
+        target.do_cleanup.assert_not_called()
+
+    def test_do_build_false_returned(self):
+        target = self.addTarget(do_build_return=False)
+
+        self.assertFalse(self._builder._build_target(target))
+
+        # for good measure, let's make sure false return from do_build is not enough to trigger cleanup
+        target.do_cleanup.assert_not_called()
+
+    def test_do_build_exc_propagates_and_triggers_cleanup_by_default(self):
+        target = self.addTarget(do_build_effect=BuildException(""))
+
+        self.assertRaises(BuildException, self._builder._build_target, target)
+
+        target.do_cleanup.assert_called_once()
+
+    def test_builder_response_cleanup_on_error_parameter(self):
+        target = self.addTarget(do_build_effect=BuildException(""))
+
+        builder = BuilderImpl(self._compiler_mock, clean_on_failure=False)
+
         try:
-            tree = Builder( MockBuildTargetLoader(loaded_targets), ["createdirs"])
+            builder._build_target(target)
         except:
+            # swallow the error, it's not important for this test
             pass
 
-        self.assertIsNotNone(tree)
+        target.do_cleanup.assert_not_called()
 
-    def test_all_build_targets_run(self):
-        mock = MagicMock()
-        mock.build_func_one.return_value = None
-        mock.build_func_two.return_value = None
-        mock.build_func_three.return_value = None
+    def test_run_all_targets(self):
+        target1 = self.addTarget()
+        target2 = self.addTarget()
+        target3_already_done = self.addTarget(do_completion_return=True)
+        target4 = self.addTarget()
 
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one"),
-            "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three")
-        }
+        self._builder.run()
 
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
+        target1.do_build.assert_called_once()
+        target2.do_build.assert_called_once()
+        target3_already_done.do_build.assert_not_called()
+        target4.do_build.assert_called_once()
 
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
-        builder.run()
+    def test_target_run_order_respected(self):
+        targetfirst = self.addTarget()
+        targetsecond = self.addTarget()
+        targetthird = self.addTarget()
+        targetfourth = self.addTarget()
 
-        mock.build_func_one.assert_called_once()
-        mock.build_func_two.assert_called_once()
-        mock.build_func_three.assert_called_once()
+        manager_mock = MagicMock()
+        manager_mock.attach_mock(targetfirst, "targetfirst")
+        manager_mock.attach_mock(targetsecond, "targetsecond")
+        manager_mock.attach_mock(targetthird, "targetthird")
+        manager_mock.attach_mock(targetfourth, "targetfourth")
 
-    def test_build_stops_after_exception(self):
-        mock = MagicMock()
-        mock.build_func_one.return_value = None
-        mock.build_func_two.return_value = None
-        mock.build_func_two.side_effect = Exception("")
-        mock.build_func_three.return_value = None
+        self._builder.run()
 
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one"),
-            "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three")
-        }
+        manager_mock.assert_has_calls([
+            call.targetfirst.do_completion_test(),
+            call.targetfirst.do_build(),
+            call.targetsecond.do_completion_test(),
+            call.targetsecond.do_build(),
+            call.targetthird.do_completion_test(),
+            call.targetthird.do_build(),
+            call.targetfourth.do_completion_test(),
+            call.targetfourth.do_build()
+        ], any_order=False)
 
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
+    def test_targets_stop_running_on_error(self):
+        target1 = self.addTarget()
+        target2 = self.addTarget()
+        target3 = self.addTarget()
+        target4_raise_exc = self.addTarget(do_build_effect=BuildException(""))
+        target5 = self.addTarget()
+        target6 = self.addTarget()
 
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
-        builder.run()
+        self._builder.run()
 
-        mock.build_func_one.assert_called_once()
-        mock.build_func_two.assert_called_once()
-        mock.build_func_three.assert_not_called()
+        target1.do_build.assert_called_once()
+        target2.do_build.assert_called_once()
+        target3.do_build.assert_called_once()
+        target4_raise_exc.do_build.assert_called_once()
+        target5.do_build.assert_not_called()
+        target6.do_build.assert_not_called()
 
-    def test_build_runs_correct_cleanup_after_fail(self):
-        mock = MagicMock()
+    def test_cleans_on_error_on_runs_for_targets_that_ran(self):
+        target1 = self.addTarget()
+        target2 = self.addTarget()
+        target3_already_run = self.addTarget(do_completion_return=True)
+        target4_raise_exc = self.addTarget(do_build_effect=BuildException(""))
+        target5 = self.addTarget()
+        target6 = self.addTarget()
 
-        mock.build_func_one.return_value = None
-        mock.cleanup_func_one.return_value = None
+        self._builder.run()
 
-        mock.build_func_two.return_value = None
-        mock.cleanup_func_two.return_value = None
-        mock.build_func_two.side_effect = Exception("")
+        target1.do_cleanup.assert_called_once()
+        target2.do_cleanup.assert_called_once()
+        target3_already_run.do_cleanuo.assert_not_called()
+        target4_raise_exc.do_cleanup.assert_called_once()
+        target5.do_cleanup.assert_not_called()
+        target6.do_cleanup.assert_not_called()
 
-        mock.build_func_three.return_value = None
-        mock.cleanup_func_three.return_value = None
+    def test_clean_runs_target_regardless_of_clean_on_error_or_already_run_status(self):
+        target_already_run = self.addTarget(do_completion_return=True)
+        target = self.addTarget(do_completion_return=False)
 
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, cleanup=mock.cleanup_func_one, name="one"),
-            "two": BuildTarget(build=mock.build_func_two, cleanup=mock.cleanup_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, cleanup=mock.cleanup_func_three, name="three")
-        }
+        self._builder = BuilderImpl(self._compiler_mock, clean_on_failure=False)
 
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
+        self._builder.clean()
 
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
-        builder.run()
+        target_already_run.do_cleanup.assert_called_once()
+        target.do_cleanup.assert_called_once()
 
-        mock.cleanup_func_one.assert_called_once()
-        mock.cleanup_func_two.assert_called_once()
-        # cleanup should not be called for targets that didn't yet run
-        mock.cleanup_func_three.assert_not_called()
+    def test_clean_runs_targets_in_reverse_order(self):
+        target1 = self.addTarget()
+        target2 = self.addTarget()
+        target3 = self.addTarget()
 
-    def test_cleanup_doesnt_runs_after_complete_success(self):
-        mock = MagicMock()
+        mock_manager = MagicMock()
+        mock_manager.attach_mock(target1, "target1")
+        mock_manager.attach_mock(target2, "target2")
+        mock_manager.attach_mock(target3, "target3")
 
-        mock.build_func_one.return_value = None
-        mock.cleanup_func_one.return_value = None
+        self._builder.clean()
 
-        mock.build_func_two.return_value = None
-        mock.cleanup_func_two.return_value = None
+        mock_manager.assert_has_calls([
+            call.target3.do_cleanup(),
+            call.target2.do_cleanup(),
+            call.target1.do_cleanup()
+        ], any_order=False)
 
-        mock.build_func_three.return_value = None
-        mock.cleanup_func_three.return_value = None
+    # Not sure if this is really correct
+    def test_cleanup_exceptions_swallowed(self):
+        target1 = self.addTarget()
+        target2 = self.addTarget(do_cleanup_effect=BuildException(""))
+        target3 = self.addTarget()
 
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, cleanup=mock.cleanup_func_one, name="one"),
-            "two": BuildTarget(build=mock.build_func_two, cleanup=mock.cleanup_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, cleanup=mock.cleanup_func_three, name="three")
-        }
+        try:
+            self._builder.clean()
+        except BuildException:
+            self.fail()
 
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
+        target1.do_cleanup.assert_called_once()
+        target2.do_cleanup.assert_called_once()
+        target3.do_cleanup.assert_called_once()
 
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "two", "three"])
-        builder.run()
 
-        mock.cleanup_func_one.assert_not_called()
-        mock.cleanup_func_two.assert_not_called()
-        mock.cleanup_func_three.assert_not_called()
-
-    def test_dependencies_run_in_correct_order(self):
-        mock = MagicMock()
-
-        mock.build_func_one.return_value = None
-        mock.build_func_two.return_value = None
-        mock.build_func_three.return_value = None
-        mock.build_func_four.return_value = None
-        mock.build_func_five.return_value = None
-        mock.build_func_six.return_value = None
-
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one", dependencies=["two", "three"]),
-            "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three", dependencies=["four"]),
-            "four": BuildTarget(build=mock.build_func_four, name="four"),
-            "five": BuildTarget(build=mock.build_func_five, name="five"),
-            "six": BuildTarget(build=mock.build_func_six, name="six")
-        }
-
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
-
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
-        builder.run()
-
-        expected_calls = [
-            call.build_func_two(),
-            call.build_func_four(),
-            call.build_func_three(),
-            call.build_func_one(),
-            call.build_func_five()
-        ]
-
-        mock.assert_has_calls(calls=expected_calls, any_order=False)
-        mock.build_func_six.assert_not_called()
-
-    def test_cleanup_runs_in_the_correct_order(self):
-        mock = MagicMock()
-
-        mock.clean_func_one.return_value = None
-        mock.clean_func_two.return_value = None
-        mock.clean_func_three.return_value = None
-        mock.clean_func_four.return_value = None
-        mock.clean_func_five.return_value = None
-        mock.clean_func_six.return_value = None
-
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=lambda: None, cleanup=mock.clean_func_one, name="one", dependencies=["two", "three"]),
-            "two": BuildTarget(build=lambda: None, cleanup=mock.clean_func_two, name="two"),
-            "three": BuildTarget(build=lambda: None, cleanup=mock.clean_func_three, name="three", dependencies=["four", "two"]),
-            "four": BuildTarget(build=lambda: None, cleanup=mock.clean_func_four, name="four", dependencies=["two"]),
-            "five": BuildTarget(build=lambda: None, cleanup=mock.clean_func_five, name="five", dependencies=["three"]),
-            "six": BuildTarget(build=lambda: None, cleanup=mock.clean_func_six, name="six")
-        }
-
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
-
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
-        builder.clean()
-
-        expected_calls = [
-            call.clean_func_five(),
-            call.clean_func_three(),
-            call.clean_func_two(),
-            call.clean_func_four(),
-            call.clean_func_two(),
-            call.clean_func_one(),
-            call.clean_func_three(),
-            call.clean_func_two(),
-            call.clean_func_four(),
-            call.clean_func_two(),
-            call.clean_func_two()
-        ]
-
-        mock.assert_has_calls(calls=expected_calls, any_order=False)
-        mock.clean_func_six.assert_not_called()
-
-    def test_dry_run_does_not_run_build_functions(self):
-        mock = MagicMock()
-
-        mock.build_func_one.return_value = None
-        mock.build_func_two.return_value = None
-        mock.build_func_three.return_value = None
-        mock.build_func_four.return_value = None
-        mock.build_func_five.return_value = None
-
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one", dependencies=["two", "three"]),
-            "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three", dependencies=["four"]),
-            "four": BuildTarget(build=mock.build_func_four, name="four"),
-            "five": BuildTarget(build=mock.build_func_five, name="five")
-        }
-
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
-
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
-        builder.dry_run()
-
-        mock.build_func_one.assert_not_called()
-        mock.build_func_two.assert_not_called()
-        mock.build_func_three.assert_not_called()
-        mock.build_func_four.assert_not_called()
-        mock.build_func_five.assert_not_called()
-
-    def test_list_targets_returns_strings(self):
-        mock = MagicMock()
-
-        mock.build_func_one.return_value = None
-        mock.build_func_two.return_value = None
-        mock.build_func_three.return_value = None
-        mock.build_func_four.return_value = None
-        mock.build_func_five.return_value = None
-
-        BUILD_TARGETS = {
-            "one": BuildTarget(build=mock.build_func_one, name="one", dependencies=["two", "three"]),
-            "two": BuildTarget(build=mock.build_func_two, name="two"),
-            "three": BuildTarget(build=mock.build_func_three, name="three", dependencies=["four"]),
-            "four": BuildTarget(build=mock.build_func_four, name="four"),
-            "five": BuildTarget(build=mock.build_func_five, name="five")
-        }
-
-        mock_target_loader = MockBuildTargetLoader(BUILD_TARGETS)
-
-        builder = Builder(target_loader=mock_target_loader, targets_to_run=["one", "five"])
-        non_verbose = builder.list_targets()
-        verbose = builder.list_targets(verbose=True)
-
-        # non-verbose and verbose produce something
-        self.assertIsNotNone(non_verbose)
-        self.assertIsNotNone(verbose)
-
-        # verbose produces more than non-verbose
-        self.assertGreater(len(verbose), len(non_verbose))
-
-    def test_handle(self):
-        pass
-"""
 if __name__ == '__main__':
     unittest.main()

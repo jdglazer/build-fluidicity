@@ -1,39 +1,24 @@
 import os
 import shutil
 from abc import abstractmethod, ABC
-from typing import Optional, List
+from typing import Optional, List, Callable
 
-from build_fluidicity_jdglazer.utils import extract_zip, download_file, log, log_exception
+from build_fluidicity_jdglazer.utils import extract_zip, download_file, log_exception
 
 
-class MetaBuildTarget:
+class MetaBuildTarget(ABC):
 
-    def __init__(self, name: str, description: str, dependencies: List[str]) -> None:
-        assert name, "Name can not be None or empty"
-        self._name: str = name
-        self._description: str = description
-        self._dependencies: List[str] = dependencies
+    @abstractmethod
+    def get_name(self) -> str:
+        return ""
 
-    @property
-    def name(self) -> str:
-        return self._name
+    @abstractmethod
+    def get_description(self) -> str:
+        return ""
 
-    @property
-    def description(self) -> str:
-        return self._description
-
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
-
-    # TODO: add @override in python 3.12
-    def __str__(self) -> str:
-        return f"{self.name}: {self._description}" + \
-            os.linesep + "  dependencies: " + ", ". join(self.dependencies)
-
-    # TODO: add @override in python 3.12
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, MetaBuildTarget) and (other.name == self.name)
+    @abstractmethod
+    def get_dependencies(self) -> List[str]:
+        return []
 
 
 class TargetLifecycle(ABC):
@@ -51,43 +36,65 @@ class TargetLifecycle(ABC):
         pass
 
 
-class BuildTarget(MetaBuildTarget, TargetLifecycle, ABC):
+class BuildTargetBase(MetaBuildTarget, TargetLifecycle, ABC):
+
+    def __init__(self):
+        pass
+
+
+class BuildTarget(BuildTargetBase, ABC):
 
     def __init__(self, name: str,
                  description: Optional[str] = None,
                  dependencies: Optional[List[str]] = None):
+        super().__init__()
+        self._name = name
+        self._description = description or ""
+        self._dependencies = dependencies or []
 
-        super().__init__(name, description or "", dependencies or [])
+    def get_name(self) -> str:
+        return self._name
 
+    def get_description(self) -> str:
+        return self._description
 
-class LoggingBuildTargetWrapper(TargetLifecycle):
-
-    def __init__(self, target_to_wrap: BuildTarget) -> None:
-        self.target_to_wrap = target_to_wrap
+    def get_dependencies(self) -> List[str]:
+        return self._dependencies
 
     # TODO: add @override in python 3.12
+    # @override
+    def __str__(self) -> str:
+        return f"{self._name}: {self._description}" + \
+            os.linesep + "  dependencies: " + ", ".join(self._dependencies)
+
+    # TODO: add @override in python 3.12
+    # @override
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, MetaBuildTarget) and (other.get_name() == self._name)
+
+
+class CustomBuildTarget(BuildTarget):
+
+    def __init__(self, name: str,
+                 do_build: Callable[[], bool],
+                 description: Optional[str] = None,
+                 dependencies: Optional[List[str]] = None,
+                 do_completion_test: Optional[Callable[[], bool]] = None,
+                 do_cleanup: Optional[Callable[[], None]] = None):
+        super().__init__(name=name, description=description, dependencies=dependencies)
+        self._do_build = do_build
+        self._do_completion_test = do_completion_test
+        self._do_cleanup = do_cleanup
+
     def do_build(self) -> bool:
-        log(f"Building target '{self.target_to_wrap.name}'", self.target_to_wrap.name)
-        try:
-            return self.target_to_wrap.do_build()
-        except Exception as e:
-            log_exception(f"Exception raised building target '{self.target_to_wrap.name}'", self.target_to_wrap.name)
-            raise e
+        return self._do_build()
 
-    # TODO: add @override in python 3.12
-    def do_cleanup(self) -> None:
-        log(f"Running cleanup on target '{self.target_to_wrap.name}'")
-        try:
-            self.target_to_wrap.do_cleanup()
-        except Exception as e:
-            log_exception(f"Cleanup failed for target '{self.target_to_wrap.name}'", self.target_to_wrap.name)
-            raise e
-
-    # TODO: add @override in python 3.12
     def do_completion_test(self) -> bool:
-        completion_test_result = self.target_to_wrap.do_completion_test()
-        log(f"Completion test result for target '{self.target_to_wrap.name}': {completion_test_result}")
-        return completion_test_result
+        return callable(self._do_completion_test) and self._do_completion_test()
+
+    def do_cleanup(self) -> None:
+        if callable(self._do_cleanup):
+            self._do_cleanup()
 
 
 class DirectoryCreate(BuildTarget):
