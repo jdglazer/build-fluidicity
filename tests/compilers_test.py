@@ -78,11 +78,11 @@ class TestCompilerImpl(unittest.TestCase):
             s += call[0][0]
 
         self.assertTrue(s.find("*target_top2") >= 0)
-        self.assertTrue(s.find("|||*target_lower_1") >= 0)
-        self.assertTrue(s.find("||*target_lower_1") >= 0)
-        self.assertTrue(s.find("||*target_middle_2") >= 0)
-        self.assertTrue(s.find("|*target_middle_2") >= 0)
-        self.assertTrue(s.find("|*target_middle_1") >= 0)
+        self.assertTrue(s.find("| | | *target_lower_1") >= 0)
+        self.assertTrue(s.find("| | *target_lower_1") >= 0)
+        self.assertTrue(s.find("| | *target_middle_2") >= 0)
+        self.assertTrue(s.find("| *target_middle_2") >= 0)
+        self.assertTrue(s.find("| *target_middle_1") >= 0)
         self.assertTrue(s.find("*target_top1") >= 0)
 
     def test_wrap_build_target_no_wrappers_returns_original_target(self):

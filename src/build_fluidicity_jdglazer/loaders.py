@@ -5,7 +5,7 @@ from typing import Dict, Callable
 from build_fluidicity_jdglazer.exceptions import UnknownTargetException
 from build_fluidicity_jdglazer.targets import BuildTarget
 
-# TO DO: create specific BuildTarget extensions class for tasks like downloading files and other common tasks
+
 class BuildTargetLoader(ABC):
 
     def __init__(self):
@@ -46,8 +46,6 @@ class BasicBuildTargetLoader(BuildTargetLoader):
                 write_to(str(target))
             else:
                 write_to(target.get_name())
-
-            write_to(os.linesep)
 
 
 # static variable to be referenced across project where targets are defined

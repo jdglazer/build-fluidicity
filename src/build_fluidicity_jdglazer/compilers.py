@@ -67,7 +67,7 @@ class CompilerImpl(Compiler):
     def show_target_hierarchy(self, verbose = False, write_to: Callable[[str], None] = print) -> None:
 
         for target, depth in self._result:
-            write_to(("|"*(depth-1)) + "*" + target.get_name())
-            if verbose:
-                write_to(f": {target.get_description()}")
-            write_to(os.linesep)
+            line = ("| "*(depth-1)) + \
+                   f"*{target.get_name()}" + \
+                   (f": {target.get_description()}" if verbose else "")
+            write_to(line)

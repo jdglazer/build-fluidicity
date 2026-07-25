@@ -6,6 +6,7 @@ from build_fluidicity_jdglazer.compilers import CompilerImpl
 from build_fluidicity_jdglazer.exceptions import UnknownTargetException
 from build_fluidicity_jdglazer.loaders import BuildTargetLoader
 from build_fluidicity_jdglazer.utils import log_exception
+from build_fluidicity_jdglazer.wrappers import LoggingBuildTargetBaseWrapper
 
 
 def _handle_list(build_target_loader: BuildTargetLoader, verbose: bool, target_name: Optional[str] = None) -> None:
@@ -23,7 +24,8 @@ def _handle_run(build_target_loader: BuildTargetLoader, verbose: bool, dry: bool
     if len(target_names) == 0:
         return
 
-    _compiler = CompilerImpl(build_target_loader)
+    target_wrappers = [LoggingBuildTargetBaseWrapper] if verbose else None
+    _compiler = CompilerImpl(build_target_loader, target_wrappers = target_wrappers)
 
     _compiler.compile(target_names)
     if dry:
@@ -32,11 +34,12 @@ def _handle_run(build_target_loader: BuildTargetLoader, verbose: bool, dry: bool
         BuilderImpl(_compiler).run()
 
 
-def _handle_clean(build_target_loader: BuildTargetLoader, clean_targets: List[str]) -> None:
+def _handle_clean(build_target_loader: BuildTargetLoader, verbose: bool, clean_targets: List[str]) -> None:
     if clean_targets == 0:
         return
 
-    _compiler = CompilerImpl(build_target_loader)
+    target_wrappers = [LoggingBuildTargetBaseWrapper] if verbose else None
+    _compiler = CompilerImpl(build_target_loader, target_wrappers = target_wrappers)
     _compiler.compile(clean_targets)
     BuilderImpl(_compiler).clean()
 
@@ -83,10 +86,10 @@ def handle_args(build_target_loader: BuildTargetLoader, args_in: Optional[List[s
 
     try:
         if args.list is not None:
-            _handle_list(build_target_loader, args.list[0], args.verbose)
+            _handle_list(build_target_loader, args.verbose, args.list[0])
         elif args.run is not None:
-            _handle_run(build_target_loader, args.dry, args.verbose, list(args.run))
+            _handle_run(build_target_loader, args.verbose, args.dry, list(args.run))
         elif args.clean is not None:
-            _handle_clean(build_target_loader, list(args.clean))
+            _handle_clean(build_target_loader, args.verbose, list(args.clean))
     except Exception:
         log_exception("Error")

@@ -7,6 +7,7 @@ from build_fluidicity_jdglazer.cli import _handle_list, _handle_run, _handle_cle
 from build_fluidicity_jdglazer.compilers import CompilerImpl
 from build_fluidicity_jdglazer.exceptions import UnknownTargetException, BuildException
 from build_fluidicity_jdglazer.loaders import BuildTargetLoader
+from build_fluidicity_jdglazer.wrappers import LoggingBuildTargetBaseWrapper
 from testingutils import UltraSimpleBuildTargetSub
 
 
@@ -37,12 +38,13 @@ class TestHandleArgs(unittest.TestCase):
 
     @patch('build_fluidicity_jdglazer.cli.CompilerImpl')
     @patch('build_fluidicity_jdglazer.cli.BuilderImpl')
-    def test_handle_run_dry_run(self, builder_impl_mock, compiler_impl_mock):
+    def test_handle_run_dry_verbose_run(self, builder_impl_mock, compiler_impl_mock):
         builder_impl_mock.return_value = (builder_instance := MagicMock(spec=BuilderImpl))
         compiler_impl_mock.return_value = (compiler_instance := MagicMock(spec=CompilerImpl))
 
         _handle_run(self.build_target_loader, verbose = True, dry = True, target_names = ["target_exists"])
 
+        compiler_impl_mock.assert_called_with(self.build_target_loader, target_wrappers=[LoggingBuildTargetBaseWrapper])
         compiler_instance.compile.assert_called_with(["target_exists"])
         compiler_instance.show_target_hierarchy.assert_called_with(verbose=True)
         builder_instance.assert_not_called()
@@ -66,7 +68,7 @@ class TestHandleArgs(unittest.TestCase):
         builder_impl_mock.return_value = (builder_instance := MagicMock(spec=BuilderImpl))
         compiler_impl_mock.return_value = (compiler_instance := MagicMock(spec=CompilerImpl))
 
-        _handle_clean(self.build_target_loader, ["target_exists"])
+        _handle_clean(self.build_target_loader, False,["target_exists"])
         compiler_instance.compile.assert_called_with(["target_exists"])
         builder_impl_mock.assert_called_with(compiler_instance)
         builder_instance.run.assert_not_called()
@@ -78,7 +80,7 @@ class TestHandleArgs(unittest.TestCase):
     def test_handle_args_list(self, handle_clean_mock, handle_run_mock, handle_list_mock):
         handle_args(self.build_target_loader, args_in = [_LIST_ARG, "target_exists", _VERBOSE_FLAG])
 
-        handle_list_mock.assert_called_with(self.build_target_loader, "target_exists", True)
+        handle_list_mock.assert_called_with(self.build_target_loader, True, "target_exists")
         handle_clean_mock.assert_not_called()
         handle_run_mock.assert_not_called()
 
@@ -108,7 +110,7 @@ class TestHandleArgs(unittest.TestCase):
     def test_handle_args_clean(self, handle_clean_mock, handle_run_mock, handle_list_mock):
         handle_args(self.build_target_loader, args_in = [_CLEAN_ARG, "target_exists"])
 
-        handle_clean_mock.assert_called_with(self.build_target_loader, ["target_exists"])
+        handle_clean_mock.assert_called_with(self.build_target_loader, False, ["target_exists"])
         handle_run_mock.assert_not_called()
         handle_list_mock.assert_not_called()
 
