@@ -1,3 +1,7 @@
+#  Copyright (c) 2026 Joshua Glazer <atrail2014@gmail.com>
+#  This software is released under the MIT License.
+#  https://opensource.org
+#
 import unittest
 from unittest.mock import MagicMock, patch
 

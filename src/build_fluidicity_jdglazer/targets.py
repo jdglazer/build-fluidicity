@@ -1,4 +1,7 @@
-import os
+#  Copyright (c) 2026 Joshua Glazer <atrail2014@gmail.com>
+#  This software is released under the MIT License.
+#  https://opensource.org
+#
 import shutil
 from abc import abstractmethod, ABC
 from typing import Optional, List, Callable
@@ -24,7 +27,7 @@ class MetaBuildTarget(ABC):
 class TargetLifecycle(ABC):
 
     @abstractmethod
-    def do_build(self) -> bool:
+    def do_build(self) -> Optional[bool]:
         return True
 
     @abstractmethod
@@ -76,7 +79,7 @@ class BuildTarget(BuildTargetBase, ABC):
 class CustomBuildTarget(BuildTarget):
 
     def __init__(self, name: str,
-                 do_build: Callable[[], bool],
+                 do_build: Callable[[], Optional[bool]],
                  description: Optional[str] = None,
                  dependencies: Optional[List[str]] = None,
                  do_completion_test: Optional[Callable[[], bool]] = None,
@@ -86,7 +89,7 @@ class CustomBuildTarget(BuildTarget):
         self._do_completion_test = do_completion_test
         self._do_cleanup = do_cleanup
 
-    def do_build(self) -> bool:
+    def do_build(self) -> Optional[bool]:
         return self._do_build()
 
     def do_completion_test(self) -> bool:

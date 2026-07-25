@@ -1,3 +1,7 @@
+#  Copyright (c) 2026 Joshua Glazer <atrail2014@gmail.com>
+#  This software is released under the MIT License.
+#  https://opensource.org
+#
 import unittest
 from typing import Optional
 from unittest.mock import MagicMock, call
@@ -16,7 +20,7 @@ class TestBuilderImpl(unittest.TestCase):
         self._builder = BuilderImpl(self._compiler_mock)
 
     def addTarget(self,
-                  do_build_return = True,
+                  do_build_return: Optional[bool] = True,
                   do_build_effect: Optional[Exception] = None,
                   do_completion_return = False,
                   do_cleanup_effect: Optional[Exception] = None,
@@ -91,6 +95,13 @@ class TestBuilderImpl(unittest.TestCase):
             pass
 
         target.do_cleanup.assert_not_called()
+
+    def test_build_target_do_build_returns_none(self):
+        target = self.addTarget(do_completion_return=False, do_build_return=None)
+
+        builder = BuilderImpl(MagicMock())
+
+        self.assertTrue(builder._build_target(target))
 
     def test_run_all_targets(self):
         target1 = self.addTarget()

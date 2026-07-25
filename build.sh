@@ -1,5 +1,9 @@
 #!/bin/bash
-
+#
+# Copyright (c) 2026 Joshua Glazer <atrail2014@gmail.com>
+# This software is released under the MIT License.
+# https://opensource.org
+#
 SCRIPT_DIR=$( dirname "$0" )
 
 usage() {
@@ -8,6 +12,7 @@ usage() {
   echo "  -i, --dockerimage   build docker image"
   echo "  -r, --runcontainer  run docker container bash command line"
   echo "  -t, --test          run python tests"
+  echo "  -e FILENAME         run specified example file"
   echo "  -b, --build         run python package build"
   echo "  -c, --clean         clean docker system cache (docker prune)"
 }
@@ -43,6 +48,12 @@ while [[ $# -gt 0 ]]; do
     -t|--test)
       echo "Running python tests..."
       run_on_docker_bash "PYTHONPATH=src pytest --log-cli-level=DEBUG --cov=build_fluidicity_jdglazer --cov-report=html"
+      shift
+      ;;
+    -e)
+      shift
+      py_file="$1"
+      run_on_docker_bash "PYTHONPATH=src python examples/\"${py_file}\""
       shift
       ;;
     -b|--build)

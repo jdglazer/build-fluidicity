@@ -1,3 +1,7 @@
+#  Copyright (c) 2026 Joshua Glazer <atrail2014@gmail.com>
+#  This software is released under the MIT License.
+#  https://opensource.org
+#
 from abc import abstractmethod, ABC
 from typing import List, Iterable
 
@@ -9,6 +13,7 @@ class Builder(ABC):
     @abstractmethod
     def run(self) -> None:
         pass
+
 
     @abstractmethod
     def clean(self) -> None:
@@ -31,7 +36,8 @@ class BuilderImpl(Builder):
             return False
 
         try:
-            return target.do_build()
+            res = target.do_build()
+            return res or res is None
         except Exception as e:
             if self._clean_on_failure:
                 target.do_cleanup()

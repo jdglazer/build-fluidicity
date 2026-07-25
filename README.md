@@ -23,50 +23,52 @@ Users define the following for each build target:
 
 Exmaple files are located in examples folder and can be run with the following command (linux):
 ```bash
-  PYTHON_PATH=src python examples/simplest_example.py
+  PYTHON_PATH=src python examples/simplest_run_example.py
 ```
-### Simplest Example [(simplest_example.py)](examples/simplest_example.py)
+### Simplest Example [(simplest_example.py)](examples/simplest_run_example.py)
 
 ```python
-from build_fluidicity_jdglazer.builder import Builder
-from build_fluidicity_jdglazer.targets import BuildTarget
+from build_fluidicity_jdglazer.builder import BuilderImpl
+from build_fluidicity_jdglazer.compilers import CompilerImpl
+from build_fluidicity_jdglazer.targets import CustomBuildTarget
 from build_fluidicity_jdglazer.loaders import build_target_loader
 
+# define build target one work
+def do_build_one() -> None:
+    print("Build step one work")
 
-# define target one
-def define_target_one() -> BuildTarget:
-    def build() -> None:
-        print("Build step one entered")
+# create build target one
+target_one = CustomBuildTarget(name="one", do_build = do_build_one)
 
-    return BuildTarget(name="one",
-                       build=build)
+# add build target one to loader
+build_target_loader.add_target(target_one)
 
+# define target two work
+def do_build_two() -> None:
+    print("Build step two work")
 
-# define target two
-def define_target_two() -> BuildTarget:
-    def build() -> None:
-        print("Build step two entered")
+# create build target 2
+target_two = CustomBuildTarget(name = "two", do_build = do_build_two, dependencies = ["one"])
 
-    return BuildTarget(name="two",
-                       build=build,
-                       dependencies=["one"])
+# add build target two to loader
+build_target_loader.add_target(target_two)
 
 
 if __name__ == '__main__':
-    # add build targets to loader
-    build_target_loader.add_target(define_target_one())
-    build_target_loader.add_target(define_target_two())
+    # create a compiler taking a build loader
+    compiler = CompilerImpl(target_loader = build_target_loader)
+    # compile with targets we wish to run
+    compiler.compile(targets_to_build = ["two"])
 
-    # create builder and tell it to run build target named 'two'
-    builder = Builder(targets_to_run=["two"], target_loader=build_target_loader, verbose=True)
-
-    # run build
+    # create builder taking the compiler
+    builder = BuilderImpl(compiler = compiler)
+    # run the build
     builder.run()
 ```
 
 Notice that this example provided is the bare minimum needed to run build target 'two' and its dependency, 'one'. This example is provided to show the general setup. Below is a more sophisticated example.
 
-### Extended Example [(simple_example.py)](examples/simple_example.py)
+### Extended Example [(simple_example.py)](examples/object_oriented_example.py)
 
 ```python
 import os
@@ -165,7 +167,7 @@ Some important notes:
 * Exception Handling - We allow exceptions to propagate out of build function. This helps the framework decide that the build has failed. On the other hand, we swallow exceptions in completion tests and cleanup functions. We take the perspective that exceptions in determining completion mean it's not complete and exception in cleanup should correspond to cleanup already being done. If we want to stop cleanup on failure of a cleanup step, we can allow the exception to propagate out of cleanup functions.
 * Organization - we define parent functions to return each build target. This is primarily an organization and scoping tool. This are not necessary strictly speaking.
 
-### Cleanup Example [(clean_example.py)](examples/clean_example.py)
+### Cleanup Example [(clean_example.py)](examples/simplest_clean_example.py)
 ```python
     # everything above here would look exactly like the examples above
     # We replace the builder.run() with a call to clean()
