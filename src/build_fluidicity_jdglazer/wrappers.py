@@ -3,15 +3,21 @@
 #  https://opensource.org
 #
 from abc import ABC
-from typing import List
+from typing import List, Optional
 
 from build_fluidicity_jdglazer.targets import BuildTarget, BuildTargetBase
 from build_fluidicity_jdglazer.utils import log, log_exception
 
 
 class BuildTargetBaseWrapper(BuildTargetBase, ABC):
+    """Abstract Base for all BuildTargetBaseWrappers
+    """
 
     def __init__(self, target_to_wrap: BuildTargetBase) -> None:
+        """Constructor for BuildTargetBaseWrapper
+        Args:
+            target_to_wrap: The target that is wrappers
+        """
         super().__init__()
         self._wrapped_target = target_to_wrap
 
@@ -32,13 +38,16 @@ class BuildTargetBaseWrapper(BuildTargetBase, ABC):
 
 
 class LoggingBuildTargetBaseWrapper(BuildTargetBaseWrapper):
+    """A target wrapper that logs, build, clean and completion test steps as well as exceptions raised
+    from wrapped target calls
+    """
 
     def __init__(self, target_to_wrap: BuildTarget) -> None:
         super().__init__(target_to_wrap)
 
     # TODO: add @override in python 3.12
     # @override
-    def do_build(self) -> bool:
+    def do_build(self) -> Optional[bool]:
         log(f"Building target '{self.get_name()}'", self.get_name())
         try:
             return self._wrapped_target.do_build()

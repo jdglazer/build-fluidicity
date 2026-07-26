@@ -14,6 +14,14 @@ from build_fluidicity_jdglazer.wrappers import LoggingBuildTargetBaseWrapper
 
 
 def _handle_list(build_target_loader: BuildTargetLoader, verbose: bool, target_name: Optional[str] = None) -> None:
+    """Handles -list command and relevant options
+    Args:
+        build_target_loader: the loader with all build targets
+        verbose: if True, add extra details to output if true
+        target_name: The name of the target for which to list information, if omitted all targets will be listed
+
+    Returns: None
+    """
     if target_name is None:
         build_target_loader.list_targets(verbose=verbose)
     else:
@@ -25,6 +33,16 @@ def _handle_list(build_target_loader: BuildTargetLoader, verbose: bool, target_n
 
 
 def _handle_run(build_target_loader: BuildTargetLoader, verbose: bool, dry: bool, target_names: List[str]) -> None:
+    """Handles -run command and relevant options
+
+    Args:
+        build_target_loader: the loader with all build targets
+        verbose: if True, add logging output or extra details if dry is True
+        dry: if True, run show build target run order
+        target_names: Targets to run
+
+    Returns: None
+    """
     if len(target_names) == 0:
         return
 
@@ -39,6 +57,15 @@ def _handle_run(build_target_loader: BuildTargetLoader, verbose: bool, dry: bool
 
 
 def _handle_clean(build_target_loader: BuildTargetLoader, verbose: bool, clean_targets: List[str]) -> None:
+    """Handles -clean command and relevant options
+
+    Args:
+        build_target_loader: the loader with all build targets
+        verbose: if True, add logging output
+        clean_targets: Targets to clean
+
+    Returns: None
+    """
     if clean_targets == 0:
         return
 
@@ -56,6 +83,15 @@ _RUN_ARG = "-run"
 _CLEAN_ARG = "-clean"
 
 def handle_args(build_target_loader: BuildTargetLoader, args_in: Optional[List[str]] = None) -> None:
+    """Primary entry point to command line application
+
+    Args:
+        build_target_loader: the loader with all build targets
+        args_in: We can override the default sys.argv input by provided a list of args here (mainly for testing)
+
+    Returns: None
+    """
+    assert isinstance(build_target_loader, BuildTargetLoader), "Invalid argument type"
     arg_parser = argparse.ArgumentParser(description="Build Fluidicity commandline application")
 
     main_group = arg_parser.add_mutually_exclusive_group(required=True)

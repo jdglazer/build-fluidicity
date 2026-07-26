@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 from build_fluidicity_jdglazer.compilers import CompilerImpl
 from build_fluidicity_jdglazer.exceptions import UnknownTargetException
-from build_fluidicity_jdglazer.loaders import BasicBuildTargetLoader
+from build_fluidicity_jdglazer.loaders import BasicBuildTargetLoader, build_target_loader
 from testingutils import UltraSimpleBuildTargetSub, SimpleClassA, SimpleClassB
 
 
@@ -90,13 +90,13 @@ class TestCompilerImpl(unittest.TestCase):
         self.assertTrue(s.find("*target_top1") >= 0)
 
     def test_wrap_build_target_no_wrappers_returns_original_target(self):
-        compiler = CompilerImpl(MagicMock(), target_wrappers=None)
+        compiler = CompilerImpl(build_target_loader, target_wrappers=None)
         target = UltraSimpleBuildTargetSub(name="target")
         self.assertIsInstance(compiler._wrap_build_target(target), UltraSimpleBuildTargetSub)
 
     def test_wrap_build_target_correct_wrap_order(self):
 
-        compiler = CompilerImpl(MagicMock(), target_wrappers = [SimpleClassA, SimpleClassB])
+        compiler = CompilerImpl(build_target_loader, target_wrappers = [SimpleClassA, SimpleClassB])
 
         wrapped_obj = compiler._wrap_build_target(UltraSimpleBuildTargetSub(name="target"))
 

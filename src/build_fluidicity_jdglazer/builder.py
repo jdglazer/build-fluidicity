@@ -9,29 +9,38 @@ from build_fluidicity_jdglazer.compilers import Compiler
 from build_fluidicity_jdglazer.targets import TargetLifecycle
 
 class Builder(ABC):
-
+    """Abstract Base type for all builders
+    """
     @abstractmethod
     def run(self) -> None:
+        """Runs build process
+        Returns: None
+        """
         pass
 
 
     @abstractmethod
     def clean(self) -> None:
+        """Runs full cleanup
+        Returns: None
+        """
         pass
 
 
 class BuilderImpl(Builder):
 
     def __init__(self, compiler: Compiler, clean_on_failure = True) -> None:
+        """Initializes BuilderImpl
+
+        Args:
+            compiler: The compiler which provides build run result
+            clean_on_failure: If True, targets that have been run will have their do_cleanup method called when a target fails with an exception
+        """
         self._compiler = compiler
         self._clean_on_failure = clean_on_failure
 
     def _build_target(self, target: TargetLifecycle) -> bool:
-        """
-        Runs the build function if completion test is not set or returns false
 
-        :return: True if the build function was run, false otherwise
-        """
         if target.do_completion_test():
             return False
 
@@ -44,6 +53,7 @@ class BuilderImpl(Builder):
             raise e
 
     def _clean_targets(self, targets: Iterable[TargetLifecycle]) -> None:
+
         for target in targets:
             try:
                 target.do_cleanup()
@@ -68,6 +78,7 @@ class BuilderImpl(Builder):
     # TODO: add override in python 3.12
     # @override
     def clean(self) -> None:
+
         for target, depth in reversed(self._compiler.result()):
             try:
                 target.do_cleanup()

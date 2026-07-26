@@ -11,20 +11,27 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 A lightweight python build framework designed to help configure builds based on a dependency model. Build steps can depend on the completion of other build steps. The framework will run the dependencies of a build step before the build step is run. In the case of a failure the cleanup logic of each of the build steps already run will execute in the reverse order that the steps were run.
 
-Users define the following for each build target:
-* __target name__ (required) - the name the framework identifies the target by
-* __primary build logic__ (required) - a function that performs the main task of the build
-* __target description__ (optional) - a string displaying more info about what the target accomplishes
-* __logic to determine target completion__ (optional) - a function used to determine whether to run the target when building, target will run everytime when it's not defined
-* __cleanup logic__ (optional) - a function run in the case of a build failure
-* __dependencies__ (optional) - a list of names of targets that should be run before the current target
+At its base, this framework has the series of elements described below:
+
+| Element              | Source                                                     | Version | Purpose                                                                                      |
+|----------------------|------------------------------------------------------------|---------|----------------------------------------------------------------------------------------------|
+| Build Target         | [targets.py](src/build_fluidicity_jdglazer/targets.py)     | 1.0.0   | Define a build tasks and its cleanup procedures                                              |
+| Build Target Loader  | [loaders.py](src/build_fluidicity_jdglazer/loaders.py)     | 1.0.0   | Collectes and provides access to build targets                                               |
+| Compiler             | [compilers.py](src/build_fluidicity_jdglazer/compilers.py) | 1.0.0   | Converts a list of tasks to run into a runnable build sequence                               |
+| Builder              | [builder.py](src/build_fluidicity_jdglazer/builder.py)     | 1.0.0   | Runs a build sequence and/or its cleanup procedures                                          |
+| Build Target Wrapper | [wrappers.py](src/build_fluidicity_jdglazer/wrappers.py)   | 1.0.0   | Wraps build targets allowing generic extensions to build functionality on a per-target basis |
 
 ## Examples
 
-Exmaple files are located in examples folder and can be run with the following command (linux):
+Example files are located in examples folder and can be run with the following command (linux):
 ```bash
-  PYTHON_PATH=src python examples/simplest_run_example.py
+ PYTHON_PATH=src python examples/simplest_run_example.py
 ```
+or, if we have built docker images, we can run this (linux):
+```bash
+ ./build.sh -e simplest_run_example.py
+```
+
 ### Simplest Example [(simplest_example.py)](examples/simplest_run_example.py)
 
 ```python
@@ -195,14 +202,14 @@ bash>
 ### Building Docker Image
 The first step should be to build a docker image. This only needs to be done one time unless you are making edits to the [Dockerfile](Dockerfile).
 ```bash
-bash> build.sh -i
+ ./build.sh -i
 ```
 
 ### Running Tests
 Once the image is built, we can run the python unittests as follows:
 
 ```bash
-bash> build.sh -t
+ ./build.sh -t
 ```
 
 This will run tests on a docker container and show the results.
@@ -211,7 +218,7 @@ This will run tests on a docker container and show the results.
 To build install packages, we can run the following:
 
 ```bash
-bash> build.sh -b
+ ./build.sh -b
 ```
 The docker container build environment shares the project root directory as a volume and so generated build packages will show up in the local project root directory under [dist](dist) subdirectory.
 
@@ -219,9 +226,9 @@ The docker container build environment shares the project root directory as a vo
 To get to a bash command line in the docker container, you can run the following:
 
 ```bash
-bash> build.sh -r
-Running bash on docker container...
-root@46957618af91:/build-fluidicity#
+ ./build.sh -r
+ Running bash on docker container...
+ root@46957618af91:/build-fluidicity#
 ```
 
 This is useful for extending or troubleshooting tests as the full project structure is synced to the working directory on the container. Thus, changes made on the local machine are immediately visible on the container.

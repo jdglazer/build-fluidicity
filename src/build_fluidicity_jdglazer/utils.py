@@ -17,17 +17,33 @@ def _get_log_target_name(build_target_name: Optional[str]) -> str:
 
 
 def log(message: str, build_target_name: Optional[str] = None) -> None:
+    """Basic print logger
+
+    Args:
+        message: Message to log
+        build_target_name: build target name for which message is pertinent, if any
+
+    Returns: None
+    """
     print(f"{time.asctime()} [{_get_log_target_name(build_target_name)}] {message}")
 
 
 def log_exception(message: str = "", build_target_name: Optional[str] = None) -> None:
+    """Basic exception print logger
+
+    Args:
+        message: Error message
+        build_target_name: build target name for which message is pertinent, if any
+
+    Returns: None
+    """
     log(f"EXCEPTION! {message}", build_target_name)
     exc_type, exc, exc_traceback = sys.exc_info()
     if exc is not None:
         print("".join(traceback.format_exception(exc)))
 
 
-def iterate_zip_entries(zip_path: str, on_entry: Callable[[ZipFile, ZipInfo], None]) -> None:
+def _iterate_zip_entries(zip_path: str, on_entry: Callable[[ZipFile, ZipInfo], None]) -> None:
     with ZipFile(zip_path) as zf:
 
         for info in zf.infolist():
@@ -35,14 +51,31 @@ def iterate_zip_entries(zip_path: str, on_entry: Callable[[ZipFile, ZipInfo], No
 
 
 def extract_zip(zip_path: str, extract_root_path: str) -> None:
+    """Extracts zip file to specified directory
+
+    Args:
+        zip_path: The path to the zip file
+        extract_root_path: The directory to which the zip will be extracted
+
+    Returns: None
+    """
 
     def ext(zip_file: ZipFile, zip_info: ZipInfo) -> None:
         zip_file.extract(member=zip_info, path=extract_root_path)
 
-    iterate_zip_entries(zip_path, ext)
+    _iterate_zip_entries(zip_path, ext)
 
 
 def download_file(url: str, local_file_path: str, on_progress: Optional[Callable[[int], None]] = None) -> None:
+    """Downloads a file from an http(s) address
+
+    Args:
+        url: Url to file download
+        local_file_path: The local file to write download to
+        on_progress: A handler callback that is called with total bytes downloaded
+
+    Returns: None
+    """
     with urlopen(url=url) as response:
 
         if response.status >= 300:
@@ -67,14 +100,15 @@ def download_file(url: str, local_file_path: str, on_progress: Optional[Callable
 #    Tuple[T, int], None, None]:
 def iterate_items(deps: List[str], deps_getter: Callable[[str], List[str]]) -> Generator[
     Tuple[str, int], None, None]:
-    """
-    This functions allows the iteration over a dependency tree from the dependencies
+    """This functions allows the iteration over a dependency tree from the dependencies
     up through the objects that depend on them. It ensures that dependencies are always
     returned before objects that depend on them
 
-    :param deps: The starting list of strings
-    :param deps_getter: A function that will convert a string name into a list of its string dependencies
-    :return: A tuple contain the name of the string item and the depth of recursion
+    Args:
+        deps: The starting list of strings
+        deps_getter: A function that will convert a string name into a list of its string dependencies
+
+    Returns: A tuple containing the name of the string item and the depth of recursion
     """
     name_stack = []
 

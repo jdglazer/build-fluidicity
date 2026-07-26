@@ -12,23 +12,51 @@ from build_fluidicity_jdglazer.wrappers import BuildTargetBaseWrapper
 
 
 class Compiler(ABC):
+    """Abstract base type for all compilers
+    """
 
     @abstractmethod
     def compile(self, targets_to_build: List[str]) -> None:
+        """Runs a compile with a list of targets to build
+
+        Args:
+            targets_to_build: The list of targets to build
+
+        Returns: None
+        """
         pass
 
     @abstractmethod
     def result(self) -> List[Tuple[TargetLifecycle, int]]:
+        """Provides a list of buildable targets in the expected build order
+
+        Returns: List of runnable targets paired with their respect dependency depth
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def show_target_hierarchy(self, verbose: bool = False, write_to: Callable[[str], None] = print) -> None:
+        """ Will show build order/hierarchy expected when run is called
+
+        Args:
+            verbose: add extra details to written output
+            write_to: A function that takes a string to which output will be passed
+
+        Returns: None
+        """
         pass
 
 class CompilerImpl(Compiler):
 
     def __init__(self, target_loader: BuildTargetLoader, target_wrappers: Optional[List[Type[BuildTargetBaseWrapper]]] = None) -> None:
+        """Initializes CompilerImpl
+
+        Args:
+            target_loader: target loader providing all available targets
+            target_wrappers: Build wrappers that will wrap ever single target build into result
+        """
         super().__init__()
+        assert isinstance(target_loader, BuildTargetLoader), "Invalid argument type"
         self._target_loader = target_loader
         self._target_wrappers = target_wrappers
         self._result: List[Tuple[BuildTarget, int]] = []
@@ -36,6 +64,7 @@ class CompilerImpl(Compiler):
     # TODO: add override in python 3.12
     # @override
     def compile(self, targets_to_build: List[str]) -> None:
+        assert isinstance(targets_to_build, list), "Invalid argument type"
 
         def get_deps(target_name: str) -> List[str]:
             return self._target_loader.get_build_target(target_name).get_dependencies()
@@ -47,6 +76,13 @@ class CompilerImpl(Compiler):
             self._result.append((target, depth))
 
     def _wrap_build_target(self, target: BuildTargetBase) -> BuildTargetBase:
+        """Will wrap the build target into all provided target_wrapper types
+
+        Args:
+            target: The target to wrap
+
+        Returns: The wrapped target
+        """
         if self._target_wrappers is None:
             return target
 
