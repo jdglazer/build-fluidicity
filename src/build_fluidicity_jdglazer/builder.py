@@ -36,6 +36,7 @@ class BuilderImpl(Builder):
             compiler: The compiler which provides build run result
             clean_on_failure: If True, targets that have been run will have their do_cleanup method called when a target fails with an exception
         """
+        assert isinstance(compiler, Compiler), "compiler must be a Compiler"
         self._compiler = compiler
         self._clean_on_failure = clean_on_failure
 

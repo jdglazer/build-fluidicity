@@ -7,14 +7,14 @@ from typing import Optional
 from unittest.mock import MagicMock, call
 
 from build_fluidicity_jdglazer.builder import BuilderImpl
+from build_fluidicity_jdglazer.compilers import Compiler, CompilerImpl
 from build_fluidicity_jdglazer.exceptions import BuildException
 
 
 class TestBuilderImpl(unittest.TestCase):
 
     def setUp(self):
-        self._compiler_mock = MagicMock()
-        self._compiler_mock.result = MagicMock()
+        self._compiler_mock = MagicMock(spec=CompilerImpl)
         self._compiler_mock.result.return_value = []
 
         self._builder = BuilderImpl(self._compiler_mock)
@@ -98,10 +98,7 @@ class TestBuilderImpl(unittest.TestCase):
 
     def test_build_target_do_build_returns_none(self):
         target = self.addTarget(do_completion_return=False, do_build_return=None)
-
-        builder = BuilderImpl(MagicMock())
-
-        self.assertTrue(builder._build_target(target))
+        self.assertTrue(self._builder._build_target(target))
 
     def test_run_all_targets(self):
         target1 = self.addTarget()
