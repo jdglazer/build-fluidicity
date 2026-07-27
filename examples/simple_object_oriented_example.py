@@ -3,13 +3,13 @@
 #  https://opensource.org
 
 import os
-from build_fluidicity_jdglazer.builder import BuilderImpl
+from build_fluidicity_jdglazer.builders import BuilderImpl
 from build_fluidicity_jdglazer.compilers import CompilerImpl
 from build_fluidicity_jdglazer.targets import BuildTarget
 from build_fluidicity_jdglazer.loaders import build_target_loader
 
 
-# define build target 'readme_created'
+# implement/extend BuildTarget type
 class CreateReadmeFile(BuildTarget):
 
     readme_file_name = "readme.md"
@@ -35,7 +35,7 @@ class CreateReadmeFile(BuildTarget):
 
 
 if __name__ == '__main__':
-    # add build targets to loader
+    # add CreateReadme build targets to loader
     build_target_loader.add_target(CreateReadmeFile())
 
     # create compiler passing target loader

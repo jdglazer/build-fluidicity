@@ -64,7 +64,7 @@ class CompilerImpl(Compiler):
     # TODO: add override in python 3.12
     # @override
     def compile(self, targets_to_build: List[str]) -> None:
-        assert isinstance(targets_to_build, list), "Invalid argument type"
+        assert isinstance(targets_to_build, list) and all(isinstance(t, str) for t in targets_to_build), "Invalid argument type"
 
         def get_deps(target_name: str) -> List[str]:
             return self._target_loader.get_build_target(target_name).get_dependencies()

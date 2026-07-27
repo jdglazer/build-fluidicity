@@ -6,7 +6,7 @@ import unittest
 from typing import Optional
 from unittest.mock import MagicMock, call
 
-from build_fluidicity_jdglazer.builder import BuilderImpl
+from build_fluidicity_jdglazer.builders import BuilderImpl
 from build_fluidicity_jdglazer.compilers import Compiler, CompilerImpl
 from build_fluidicity_jdglazer.exceptions import BuildException
 

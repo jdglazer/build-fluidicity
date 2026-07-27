@@ -5,7 +5,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from build_fluidicity_jdglazer.builder import BuilderImpl
+from build_fluidicity_jdglazer.builders import BuilderImpl
 from build_fluidicity_jdglazer.cli import _handle_list, _handle_run, _handle_clean, _LIST_ARG, handle_args, \
     _VERBOSE_FLAG, _RUN_ARG, _DRY_FLAG, _CLEAN_ARG
 from build_fluidicity_jdglazer.compilers import CompilerImpl
@@ -82,9 +82,9 @@ class TestHandleArgs(unittest.TestCase):
     @patch('build_fluidicity_jdglazer.cli._handle_run')
     @patch('build_fluidicity_jdglazer.cli._handle_clean')
     def test_handle_args_list(self, handle_clean_mock, handle_run_mock, handle_list_mock):
-        handle_args(self.build_target_loader, args_in = [_LIST_ARG, "target_exists", _VERBOSE_FLAG])
+        handle_args(self.build_target_loader, args_in = [_LIST_ARG, _VERBOSE_FLAG])
 
-        handle_list_mock.assert_called_with(self.build_target_loader, True, "target_exists")
+        handle_list_mock.assert_called_with(self.build_target_loader, True)
         handle_clean_mock.assert_not_called()
         handle_run_mock.assert_not_called()
 
@@ -124,7 +124,7 @@ class TestHandleArgs(unittest.TestCase):
         handle_list_mock.side_effect = BuildException("")
 
         try:
-            handle_args(self.build_target_loader, args_in = [_LIST_ARG, "target_exists"])
+            handle_args(self.build_target_loader, args_in = [_LIST_ARG])
         except:
             self.fail("Should not have thrown an exception")
 

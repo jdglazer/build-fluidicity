@@ -5,7 +5,7 @@
 import argparse
 from typing import Optional, List
 
-from build_fluidicity_jdglazer.builder import BuilderImpl
+from build_fluidicity_jdglazer.builders import BuilderImpl
 from build_fluidicity_jdglazer.compilers import CompilerImpl
 from build_fluidicity_jdglazer.exceptions import UnknownTargetException
 from build_fluidicity_jdglazer.loaders import BuildTargetLoader
@@ -97,18 +97,15 @@ def handle_args(build_target_loader: BuildTargetLoader, args_in: Optional[List[s
     main_group = arg_parser.add_mutually_exclusive_group(required=True)
 
     main_group.add_argument(_LIST_ARG,
-                            nargs='?',
-                            default=None,
-                            action="append",
-                            metavar="target name",
-                            help="List build targets. If no argument is provided, lists all available build targets")
+                            action="store_true",
+                            help="Lists all available build targets")
     main_group.add_argument(_RUN_ARG,
-                            nargs='*',
+                            nargs='+',
                             action="store",
                             metavar="target name",
                             help="Run build targets specified by name")
     main_group.add_argument(_CLEAN_ARG,
-                            nargs='*',
+                            nargs='+',
                             action="store",
                             metavar="target name",
                             help="Run clean on targets specified by name")
@@ -125,8 +122,8 @@ def handle_args(build_target_loader: BuildTargetLoader, args_in: Optional[List[s
     args = arg_parser.parse_args(args=args_in)
 
     try:
-        if args.list is not None:
-            _handle_list(build_target_loader, args.verbose, args.list[0])
+        if args.list:
+            _handle_list(build_target_loader, args.verbose)
         elif args.run is not None:
             _handle_run(build_target_loader, args.verbose, args.dry, list(args.run))
         elif args.clean is not None:
