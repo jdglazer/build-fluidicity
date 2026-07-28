@@ -26,9 +26,83 @@ At its base, this framework has the series of elements described below:
 | Builder              | [builders.py](src/build_fluidicity_jdglazer/builders.py)   | 1.0.0   | Runs a build sequence and/or its cleanup procedures |
 | Build Target Wrapper | [wrappers.py](src/build_fluidicity_jdglazer/wrappers.py)   | 1.0.0   | Wraps build targets allowing generic extensions to build, cleanup and/or completion test functionality |
 
-## Basic Examples
+## Building Locally
 
-Example files are located in examples folder and can be run with the following command (linux):
+### Pre-requisites
+A running install of docker is necessary to continue with the below steps.
+
+### Bash Helper Utility
+This project is build on a python docker container. The image for this container can be build from the Dockerfile in the 
+root directory of the project. A script called [build.sh](build.sh) is included to help make all build related tasks easier:
+
+```bash
+./build.sh -h
+```
+
+Here's the usage info:
+
+```text
+Usage: ./build.sh [options]
+  -h, --help          print this usage message
+  -i, --dockerimage   build docker image
+  -r, --runcontainer  run docker container bash command line
+  -t, --test          run python tests
+  -e FILENAME         run specified example file
+  -b, --build         run python package build
+  -c, --clean         clean docker system cache (docker prune)
+```
+
+### Building Docker Image
+The first step should be to build a docker image. This only needs to be done one time unless you are making edits to the 
+[Dockerfile](Dockerfile).
+
+```bash
+./build.sh -i
+```
+
+### Running Tests
+Once the image is built, we can run the python unittests as follows:
+
+```bash
+./build.sh -t
+```
+
+This will run unittests on a docker container and show the results. It will additionally build an html test coverage report
+accessible at (index.html)[htmlcov/index.html]
+
+### Building Install Packages
+To build install packages, we can run the following:
+
+```bash
+./build.sh -b
+```
+
+The docker container build environment shares the project root directory as a volume and so generated build packages will 
+show up in the local project root directory under [dist](dist) subdirectory.
+
+### Accessing the Build Container Commandline
+To get to a bash command line in the docker container, you can run the following:
+
+```bash
+./build.sh -r
+```
+
+This will provide access the container in the shared project root directory:
+
+```text
+ Running bash on docker container...
+ root@46957618af91:/build-fluidicity#
+```
+
+This is mostly useful for testing changes to the build container itself or new build steps for the project during development.
+
+### Building on Windows
+If you wish to run build on Microsoft Windows, it is suggested you look at the contents of the [build.sh](build.sh) script. 
+Many of the commands will be the same in the windows command prompt.
+
+## Usage Examples
+
+Example files are located in [examples](examples) folder and can be run with the following command (linux):
 
 ```bash
  PYTHON_PATH=src python examples/simplest_run_example.py
@@ -313,6 +387,11 @@ The below rules should be used as a guide for writing custom extensions for ```B
 * Write logic robust enough to handle the conditions that ```do_build()``` has not run
 * Write logic robust enough to handle the conditions under which ```do_completion_test()``` returns ```True```
 
+### __do_completion_test()__
+* Should return ```True``` in the case where target should not be run again or where it is at least unnecessary
+* Returning ```False``` should only be done if the ```do_build()``` logic is robust enough to be called multiple times
+without ```do_clean()``` being called between
+
 ## Command Line Utility
 
 The library ships with a command line utility that is called in a Python program as follows:
@@ -446,89 +525,28 @@ Mon Jul 27 23:40:43 2026 [engine] Running cleanup on target 'five'
 
 Notice that the clean ran in the reverse order that the dry run showed us.
 
-### __do_completion_test()__
-* Should return ```True``` in the case where target should not be run again or where it is at least unnecessary
-* Returning ```False``` should only be done if the ```do_build()``` logic is robust enough to be called multiple times
-without ```do_clean()``` being called between
-
-## Current and Envisioned Extensions
+## Concepts For Future Extensions
 
 ### BuildTarget
+
+Add more BuildTarget extensions that handle specific tasks. There is a virtually unlimited range of possibilities here.
+
 ### BuildTargetLoader
+
+Add new schemes for finding BuildTargets in a Python runtime environment. For example, a loader than find all BuildTarget
+types in a specific package or module. Another could be a loader that brings multiple sub-loaders together. Another concept
+would create a loader that would store only class types and instantiate targets on an as-needed basis.
+
 ### Compiler
+
+Concentrate on improving the capabilities of the existing compiler implementation.
+
 ### Builder
+
+Concentrate on improving the capabilities of the existing builder implementation. We also might consider adding a build
+context object for preserving state across all steps of the build and making it available to build targets. We could imagine
+add a new lifecycle function to build targets that would set build context.
+
 ### BuildTargetBaseWrappers
 
-## Building Locally
-
-### Pre-requisites
-A running install of docker is necessary to continue with the below steps.
-
-### Bash Helper Utility
-This project is build on a python docker container. The image for this container can be build from the Dockerfile in the 
-root directory of the project. A script called [build.sh](build.sh) is included to help make all build related tasks easier:
-
-```bash
- ./build.sh -h
-```
-
-Here's the usage info:
-
-```text
-Usage: ./build.sh [options]
-  -h, --help          print this usage message
-  -i, --dockerimage   build docker image
-  -r, --runcontainer  run docker container bash command line
-  -t, --test          run python tests
-  -e FILENAME         run specified example file
-  -b, --build         run python package build
-  -c, --clean         clean docker system cache (docker prune)
-```
-
-### Building Docker Image
-The first step should be to build a docker image. This only needs to be done one time unless you are making edits to the 
-[Dockerfile](Dockerfile).
-
-```bash
- ./build.sh -i
-```
-
-### Running Tests
-Once the image is built, we can run the python unittests as follows:
-
-```bash
- ./build.sh -t
-```
-
-This will run unittests on a docker container and show the results. It will additionally build an html test coverage report
-accessible at (index.html)[htmlcov/index.html]
-
-### Building Install Packages
-To build install packages, we can run the following:
-
-```bash
- ./build.sh -b
-```
-
-The docker container build environment shares the project root directory as a volume and so generated build packages will 
-show up in the local project root directory under [dist](dist) subdirectory.
-
-### Accessing the Build Container Commandline
-To get to a bash command line in the docker container, you can run the following:
-
-```bash
- ./build.sh -r
-```
-
-This will provide access the container in the shared project root directory:
-
-```text
- Running bash on docker container...
- root@46957618af91:/build-fluidicity#
-```
-
-This is mostly useful for testing changes to the build container itself or new build steps for the project during development.
-
-### Building on Windows
-If you wish to run build on Microsoft Windows, it is suggested you look at the contents of the [build.sh](build.sh) script. 
-Many of the commands will be the same in the windows command prompt.
+Add wrapper implementations that perform diagnostic functions such as measuring time for a particular target to run.
