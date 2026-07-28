@@ -5,9 +5,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from build_fluidicity_jdglazer.wrappers import LoggingBuildTargetBaseWrapper
-from build_fluidicity_jdglazer.exceptions import BuildException
-from build_fluidicity_jdglazer.targets import TargetLifecycle
+from build_fluidicity.wrappers import LoggingBuildTargetBaseWrapper
+from build_fluidicity.exceptions import BuildException
+from build_fluidicity.targets import TargetLifecycle
 
 
 class TestLoggingBuildTargetBaseWrapper(unittest.TestCase):
@@ -36,7 +36,7 @@ class TestLoggingBuildTargetBaseWrapper(unittest.TestCase):
         self.target.do_completion_test.assert_called_once()
         self.target.do_cleanup.assert_called_once()
 
-    @patch('build_fluidicity_jdglazer.wrappers.log')
+    @patch('build_fluidicity.wrappers.log')
     def test_log_called_for_each(self, log_mock):
         self.wrapper.do_build()
         log_mock.assert_called_once()
@@ -50,7 +50,7 @@ class TestLoggingBuildTargetBaseWrapper(unittest.TestCase):
         log_mock.assert_called_once()
         log_mock.reset_mock()
 
-    @patch('build_fluidicity_jdglazer.wrappers.log_exception')
+    @patch('build_fluidicity.wrappers.log_exception')
     def test_log_exception_called(self, log_exception_mock):
         self.target.do_build.side_effect = BuildException("")
         self.assertRaises(BuildException, self.wrapper.do_build)

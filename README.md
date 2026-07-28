@@ -20,11 +20,11 @@ At its base, this framework has the series of elements described below:
 
 | Element              | Source                                                     | Version | Purpose                                                                                                |
 |----------------------|------------------------------------------------------------|---------|--------------------------------------------------------------------------------------------------------|
-| Build Target         | [targets.py](src/build_fluidicity_jdglazer/targets.py)     | 1.0.0   | Define a build tasks and its cleanup procedures |
-| Build Target Loader  | [loaders.py](src/build_fluidicity_jdglazer/loaders.py)     | 1.0.0   | Collectes and provides access to build targets |
-| Compiler             | [compilers.py](src/build_fluidicity_jdglazer/compilers.py) | 1.0.0   | Converts a list of targets to run into a runnable build sequence |
-| Builder              | [builders.py](src/build_fluidicity_jdglazer/builders.py)   | 1.0.0   | Runs a build sequence and/or its cleanup procedures |
-| Build Target Wrapper | [wrappers.py](src/build_fluidicity_jdglazer/wrappers.py)   | 1.0.0   | Wraps build targets allowing generic extensions to build, cleanup and/or completion test functionality |
+| Build Target         | [targets.py](src/build_fluidicity/targets.py)     | 1.0.0   | Define a build tasks and its cleanup procedures |
+| Build Target Loader  | [loaders.py](src/build_fluidicity/loaders.py)     | 1.0.0   | Collectes and provides access to build targets |
+| Compiler             | [compilers.py](src/build_fluidicity/compilers.py) | 1.0.0   | Converts a list of targets to run into a runnable build sequence |
+| Builder              | [builders.py](src/build_fluidicity/builders.py)   | 1.0.0   | Runs a build sequence and/or its cleanup procedures |
+| Build Target Wrapper | [wrappers.py](src/build_fluidicity/wrappers.py)   | 1.0.0   | Wraps build targets allowing generic extensions to build, cleanup and/or completion test functionality |
 
 ## Building Locally
 
@@ -117,10 +117,10 @@ or, if we have built docker images, we can run this (linux):
 ### Simplest Example [(simplest_example.py)](examples/simplest_run_example.py)
 
 ```python
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.targets import CustomBuildTarget
-from build_fluidicity_jdglazer.loaders import build_target_loader
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.targets import CustomBuildTarget
+from build_fluidicity.loaders import build_target_loader
 
 
 # define build target one work
@@ -161,23 +161,22 @@ if __name__ == '__main__':
 Notice that this example provided is the bare minimum needed to run build target 'two' and its dependency, 'one'. 
 This example is provided to show the general setup. Below is a more sophisticated example.
 
-### Object Oriented Example [simple_object_oriented_example.py](examples/simple_object_oriented_example.py)
+### Object Oriented Example [(simple_object_oriented_example.py)](examples/simple_object_oriented_example.py)
 
 ```python
 import os
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.targets import BuildTarget
-from build_fluidicity_jdglazer.loaders import build_target_loader
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.targets import BuildTarget
+from build_fluidicity.loaders import build_target_loader
 
 
 # implement/extend BuildTarget type
 class CreateReadmeFile(BuildTarget):
-
     readme_file_name = "readme.md"
 
     def __init__(self):
-        super().__init__(name = "create_readme", description = "Creates readme file")
+        super().__init__(name="create_readme", description="Creates readme file")
 
     # @override
     def do_build(self) -> None:
@@ -201,12 +200,12 @@ if __name__ == '__main__':
     build_target_loader.add_target(CreateReadmeFile())
 
     # create compiler passing target loader
-    compiler = CompilerImpl(target_loader = build_target_loader)
+    compiler = CompilerImpl(target_loader=build_target_loader)
     # compile targets to build, 'set_license'
-    compiler.compile(targets_to_build = ["create_readme"])
+    compiler.compile(targets_to_build=["create_readme"])
 
     # create builder passing in compiler
-    builder = BuilderImpl(compiler = compiler)
+    builder = BuilderImpl(compiler=compiler)
     # run build
     builder.run()
 ```
@@ -221,41 +220,39 @@ overrides and the optional ```description``` property
 If we omit the first, we will get an error on the compile step. If we omit the second, the call to Builder's run method 
 will not do anything.
 
-### Cleanup Example [simplest_clean_example.py](examples/simplest_clean_example.py)
+### Cleanup Example [(simplest_clean_example.py)](examples/simplest_clean_example.py)
 
 ```python
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.targets import CustomBuildTarget
-from build_fluidicity_jdglazer.loaders import build_target_loader
-
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.targets import CustomBuildTarget
+from build_fluidicity.loaders import build_target_loader
 
 # create build target one
 target_one = CustomBuildTarget(name="one",
-                               do_build = lambda: None,
-                               do_cleanup = lambda: print("clean one"))
+                               do_build=lambda: None,
+                               do_cleanup=lambda: print("clean one"))
 
 # add build target one to loader
 build_target_loader.add_target(target_one)
 
 # create build target 2
-target_two = CustomBuildTarget(name = "two",
-                               do_build = lambda: None,
-                               do_cleanup = lambda: print("clean two"),
-                               dependencies = ["one"])
+target_two = CustomBuildTarget(name="two",
+                               do_build=lambda: None,
+                               do_cleanup=lambda: print("clean two"),
+                               dependencies=["one"])
 
 # add build target two to loader
 build_target_loader.add_target(target_two)
 
-
 if __name__ == '__main__':
     # create a compiler taking a build loader
-    compiler = CompilerImpl(target_loader = build_target_loader)
+    compiler = CompilerImpl(target_loader=build_target_loader)
     # compile with targets we wish to run
-    compiler.compile(targets_to_build = ["two"])
+    compiler.compile(targets_to_build=["two"])
 
     # create builder taking the compiler
-    builder = BuilderImpl(compiler = compiler)
+    builder = BuilderImpl(compiler=compiler)
 
     # clean the build
     builder.clean()
@@ -264,7 +261,7 @@ if __name__ == '__main__':
 Notice that there is really no substantive difference between the code we write to run and to clean a build until the very
 last line. It all comes down to which function call we make on the builder object. In this case we call ```clean()```.
 
-### Multi-tier Dependency Example
+### Multi-tier Dependency Example [(build_error_example.py)](examples/build_error_example.py)
 
 Here is an example which we employ to demonstrate some of the core functionalities of build run behavior.
 In this example we create 6 build targets with a more complex dependency structure. We also add a target which is already
@@ -274,10 +271,10 @@ of the same message from its build and clean method, just replacing the name of 
 If you want to test yourself, you can attempt to answer the following question: What will this program print out?
 
 ```python
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.loaders import build_target_loader
-from build_fluidicity_jdglazer.targets import CustomBuildTarget
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.loaders import build_target_loader
+from build_fluidicity.targets import CustomBuildTarget
 
 
 def raise_exc() -> None:
@@ -285,25 +282,25 @@ def raise_exc() -> None:
     raise Exception("")
 
 
-_1 = CustomBuildTarget(name = "1",   do_build=lambda: print("run 1"),
-                                     do_cleanup = lambda: print("clean 1"),
-                                     dependencies=["2"])
-_2 = CustomBuildTarget(name = "2",   do_build=lambda: print("run 2"),
-                                     do_cleanup = lambda: print("clean 2"),
-                                     dependencies=["3"])
+_1 = CustomBuildTarget(name="1", do_build=lambda: print("run 1"),
+                       do_cleanup=lambda: print("clean 1"),
+                       dependencies=["2"])
+_2 = CustomBuildTarget(name="2", do_build=lambda: print("run 2"),
+                       do_cleanup=lambda: print("clean 2"),
+                       dependencies=["3"])
 # target fails in build by raising an exception
-_3 = CustomBuildTarget(name = "3",   do_build=raise_exc,
-                                     do_cleanup = lambda: print("clean 3"),
-                                     dependencies=["4", "5"])
-_4 = CustomBuildTarget(name = "4",   do_build=lambda: print("run 4"),
-                                     do_cleanup = lambda: print("clean 4"))
-_5 = CustomBuildTarget(name = "5",   do_build=lambda: print("run 5"),
-                                     do_cleanup = lambda: print("clean 5"),
-                                     dependencies=["6"])
+_3 = CustomBuildTarget(name="3", do_build=raise_exc,
+                       do_cleanup=lambda: print("clean 3"),
+                       dependencies=["4", "5"])
+_4 = CustomBuildTarget(name="4", do_build=lambda: print("run 4"),
+                       do_cleanup=lambda: print("clean 4"))
+_5 = CustomBuildTarget(name="5", do_build=lambda: print("run 5"),
+                       do_cleanup=lambda: print("clean 5"),
+                       dependencies=["6"])
 # target work is already complete (completion test returns true)
-_6 = CustomBuildTarget(name = "6",   do_build=lambda: print("run 6"),
-                                     do_cleanup = lambda: print("clean 6"),
-                                     do_completion_test=lambda: True)
+_6 = CustomBuildTarget(name="6", do_build=lambda: print("run 6"),
+                       do_cleanup=lambda: print("clean 6"),
+                       do_completion_test=lambda: True)
 
 if __name__ == '__main__':
     # If we compile to build 1 only:
@@ -397,9 +394,9 @@ without ```do_clean()``` being called between
 The library ships with a command line utility that is called in a Python program as follows:
 
 ```python
-from build_fluidicity_jdglazer.cli import handle_args
-from build_fluidicity_jdglazer.loaders import build_target_loader
-from build_fluidicity_jdglazer.targets import CustomBuildTarget
+from build_fluidicity.cli import handle_args
+from build_fluidicity.loaders import build_target_loader
+from build_fluidicity.targets import CustomBuildTarget
 
 # add targets to loader here
 

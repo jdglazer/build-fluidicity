@@ -5,10 +5,10 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, List, Callable, Optional, Type
 
-from build_fluidicity_jdglazer.loaders import BuildTargetLoader
-from build_fluidicity_jdglazer.targets import BuildTarget, TargetLifecycle, BuildTargetBase
-from build_fluidicity_jdglazer.utils import iterate_items
-from build_fluidicity_jdglazer.wrappers import BuildTargetBaseWrapper
+from build_fluidicity.loaders import BuildTargetLoader
+from build_fluidicity.targets import BuildTarget, TargetLifecycle, BuildTargetBase
+from build_fluidicity.utils import iterate_items
+from build_fluidicity.wrappers import BuildTargetBaseWrapper
 
 
 class Compiler(ABC):

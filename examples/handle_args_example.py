@@ -2,9 +2,9 @@
 #  This software is released under the MIT License.
 #  https://opensource.org
 
-from build_fluidicity_jdglazer.cli import handle_args
-from build_fluidicity_jdglazer.loaders import build_target_loader
-from build_fluidicity_jdglazer.targets import CustomBuildTarget
+from build_fluidicity.cli import handle_args
+from build_fluidicity.loaders import build_target_loader
+from build_fluidicity.targets import CustomBuildTarget
 
 build_target_loader.add_target(
 CustomBuildTarget(name = "one",   description = "description for target one", do_build = lambda: None,

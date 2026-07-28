@@ -6,8 +6,8 @@ import unittest
 from typing import List
 from unittest.mock import MagicMock, patch
 
-from build_fluidicity_jdglazer.exceptions import BuildException, CircularDependencyException
-from build_fluidicity_jdglazer.utils import iterate_items, log_exception
+from build_fluidicity.exceptions import BuildException, CircularDependencyException
+from build_fluidicity.utils import iterate_items, log_exception
 
 
 class TestUtilsMethods(unittest.TestCase):
@@ -65,7 +65,7 @@ class TestUtilsMethods(unittest.TestCase):
         # list will iterate through the iterable
         self.assertRaises(CircularDependencyException, list, iterator)
 
-    @patch('build_fluidicity_jdglazer.utils.print')
+    @patch('build_fluidicity.utils.print')
     def test_log_exception(self, print_mock):
         try:
             raise BuildException("Here i am")

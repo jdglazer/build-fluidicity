@@ -2,8 +2,8 @@
 #  This software is released under the MIT License.
 #  https://opensource.org
 #
-from build_fluidicity_jdglazer.targets import BuildTarget, BuildTargetBase
-from build_fluidicity_jdglazer.wrappers import BuildTargetBaseWrapper
+from build_fluidicity.targets import BuildTarget, BuildTargetBase
+from build_fluidicity.wrappers import BuildTargetBaseWrapper
 
 
 class UltraSimpleBuildTargetSub(BuildTarget):

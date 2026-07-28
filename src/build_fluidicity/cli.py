@@ -5,12 +5,12 @@
 import argparse
 from typing import Optional, List
 
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.exceptions import UnknownTargetException
-from build_fluidicity_jdglazer.loaders import BuildTargetLoader
-from build_fluidicity_jdglazer.utils import log_exception
-from build_fluidicity_jdglazer.wrappers import LoggingBuildTargetBaseWrapper
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.exceptions import UnknownTargetException
+from build_fluidicity.loaders import BuildTargetLoader
+from build_fluidicity.utils import log_exception
+from build_fluidicity.wrappers import LoggingBuildTargetBaseWrapper
 
 
 def _handle_list(build_target_loader: BuildTargetLoader, verbose: bool, target_name: Optional[str] = None) -> None:

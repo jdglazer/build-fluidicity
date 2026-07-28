@@ -9,7 +9,7 @@ from typing import Callable, Optional, List, Generator, Tuple
 from urllib.request import urlopen
 from zipfile import ZipFile, ZipInfo
 
-from build_fluidicity_jdglazer.exceptions import CircularDependencyException
+from build_fluidicity.exceptions import CircularDependencyException
 
 
 def _get_log_target_name(build_target_name: Optional[str]) -> str:

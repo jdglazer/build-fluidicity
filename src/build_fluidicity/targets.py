@@ -7,7 +7,7 @@ import shutil
 from abc import abstractmethod, ABC
 from typing import Optional, List, Callable
 
-from build_fluidicity_jdglazer.utils import extract_zip, download_file, log_exception
+from build_fluidicity.utils import extract_zip, download_file, log_exception
 
 
 class MetaBuildTarget(ABC):

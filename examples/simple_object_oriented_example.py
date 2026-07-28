@@ -3,10 +3,10 @@
 #  https://opensource.org
 
 import os
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.targets import BuildTarget
-from build_fluidicity_jdglazer.loaders import build_target_loader
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.targets import BuildTarget
+from build_fluidicity.loaders import build_target_loader
 
 
 # implement/extend BuildTarget type

@@ -47,7 +47,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -t|--test)
       echo "Running python tests..."
-      run_on_docker_bash "PYTHONPATH=src pytest --log-cli-level=DEBUG --cov=build_fluidicity_jdglazer --cov-report=html"
+      run_on_docker_bash "PYTHONPATH=src pytest --log-cli-level=DEBUG --cov=build_fluidicity --cov-report=html"
       shift
       ;;
     -e)

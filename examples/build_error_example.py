@@ -1,10 +1,10 @@
 #  Copyright (c) 2026 Joshua Glazer <atrail2014@gmail.com>
 #  This software is released under the MIT License.
 #  https://opensource.org
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.loaders import build_target_loader
-from build_fluidicity_jdglazer.targets import CustomBuildTarget
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.loaders import build_target_loader
+from build_fluidicity.targets import CustomBuildTarget
 
 
 def raise_exc() -> None:

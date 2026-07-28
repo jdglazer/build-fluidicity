@@ -5,8 +5,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Callable
 
-from build_fluidicity_jdglazer.exceptions import UnknownTargetException
-from build_fluidicity_jdglazer.targets import BuildTarget
+from build_fluidicity.exceptions import UnknownTargetException
+from build_fluidicity.targets import BuildTarget
 
 
 class BuildTargetLoader(ABC):

@@ -3,10 +3,10 @@
 #  https://opensource.org
 #
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
-from build_fluidicity_jdglazer.targets import DirectoryCreate, ExtractZip, DownloadFile, MetaBuildTarget, \
-    TargetLifecycle
+from build_fluidicity.targets import DirectoryCreate, ExtractZip, DownloadFile, MetaBuildTarget, \
+    TargetLifecycle, CustomBuildTarget
 from testingutils import UltraSimpleBuildTargetSub
 
 
@@ -24,6 +24,50 @@ class TestBuildTarget(unittest.TestCase):
         target = UltraSimpleBuildTargetSub(name="test")
         self.assertIsInstance(target, MetaBuildTarget)
         self.assertIsInstance(target, TargetLifecycle)
+
+
+class TestCustomBuildTarget(unittest.TestCase):
+
+    def test_wrapped_methods_called(self):
+        do_build = MagicMock()
+        do_cleanup = MagicMock()
+        do_completion_test = MagicMock()
+
+        cbt = CustomBuildTarget("test",
+                                do_build = do_build,
+                                do_cleanup = do_cleanup,
+                                do_completion_test = do_completion_test)
+
+        cbt.do_build()
+        cbt.do_completion_test()
+        cbt.do_cleanup()
+
+        do_build.assert_called_once()
+        do_completion_test.assert_called_once()
+        do_cleanup.assert_called_once()
+
+    def test_properties_wrapped(self):
+        cbt = CustomBuildTarget(name = "one",
+                          description = "one of out tasks",
+                          dependencies = ["two", "three"],
+                          do_build = lambda: None)
+
+        self.assertEqual(cbt.get_name(), "one")
+        self.assertEqual(cbt.get_description(), "one of out tasks")
+        self.assertSequenceEqual(cbt.get_dependencies(), ["two", "three"])
+
+    def test_wrapped_method_returns_propagated(self):
+        do_build = MagicMock()
+        do_build.return_value = True
+        do_completion_test = MagicMock()
+        do_completion_test.return_value = False
+
+        cbt = CustomBuildTarget("test",
+                                do_build = do_build,
+                                do_completion_test = do_completion_test)
+
+        self.assertFalse(cbt.do_completion_test())
+        self.assertTrue(cbt.do_build())
 
 
 class TestDirectoryCreate(unittest.TestCase):
@@ -74,7 +118,7 @@ class TestDirectoryCreate(unittest.TestCase):
 
 class TestExtractZip(unittest.TestCase):
 
-    @patch('build_fluidicity_jdglazer.targets.extract_zip')
+    @patch('build_fluidicity.targets.extract_zip')
     def test_extract_zip_success(self, patched_extract_zip):
         ez = ExtractZip(name="test",
                         zip_path = "/path/to/file.zip",
@@ -85,7 +129,7 @@ class TestExtractZip(unittest.TestCase):
 
         patched_extract_zip.assert_called_with("/path/to/file.zip", "/base/path")
 
-    @patch('build_fluidicity_jdglazer.targets.extract_zip')
+    @patch('build_fluidicity.targets.extract_zip')
     def test_extract_zip_error_propagated(self, patched_extract_zip):
         patched_extract_zip.side_effect = Exception("")
         ez = ExtractZip(name="test",
@@ -96,7 +140,7 @@ class TestExtractZip(unittest.TestCase):
 
         self.assertRaises(Exception, ez.do_build)
 
-    @patch('build_fluidicity_jdglazer.targets.extract_zip')
+    @patch('build_fluidicity.targets.extract_zip')
     @patch('os.path.exists')
     def test_build_extract_when_re_extract_enabled(self, exists_mock, patched_extract_zip):
         exists_mock.return_value = True
@@ -110,7 +154,7 @@ class TestExtractZip(unittest.TestCase):
 
         patched_extract_zip.assert_called_with("/path/to/file.zip", "/base/path/zipex")
 
-    @patch('build_fluidicity_jdglazer.targets.extract_zip')
+    @patch('build_fluidicity.targets.extract_zip')
     @patch('os.path.exists')
     def test_build_extract_when_re_extracted_disabled(self, exists_mock, patched_extract_zip):
         exists_mock.return_value = True
@@ -167,7 +211,7 @@ class TestExtractZip(unittest.TestCase):
 
 class TestDownloadFile(unittest.TestCase):
 
-    @patch('build_fluidicity_jdglazer.targets.download_file')
+    @patch('build_fluidicity.targets.download_file')
     def test_download_if_already_present_enabled(self, download_file_mock):
         df = DownloadFile(name = "test",
                           url = "/path/to/file.zip",
@@ -179,7 +223,7 @@ class TestDownloadFile(unittest.TestCase):
 
         download_file_mock.assert_called_with(url="/path/to/file.zip", local_file_path="/local/file.zip")
 
-    @patch('build_fluidicity_jdglazer.targets.download_file')
+    @patch('build_fluidicity.targets.download_file')
     def test_download_if_already_present_disabled(self, download_file_mock):
         df = DownloadFile(name = "test",
                           url = "/path/to/file.zip",

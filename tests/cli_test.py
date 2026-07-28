@@ -5,13 +5,13 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from build_fluidicity_jdglazer.builders import BuilderImpl
-from build_fluidicity_jdglazer.cli import _handle_list, _handle_run, _handle_clean, _LIST_ARG, handle_args, \
+from build_fluidicity.builders import BuilderImpl
+from build_fluidicity.cli import _handle_list, _handle_run, _handle_clean, _LIST_ARG, handle_args, \
     _VERBOSE_FLAG, _RUN_ARG, _DRY_FLAG, _CLEAN_ARG
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.exceptions import UnknownTargetException, BuildException
-from build_fluidicity_jdglazer.loaders import BuildTargetLoader
-from build_fluidicity_jdglazer.wrappers import LoggingBuildTargetBaseWrapper
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.exceptions import UnknownTargetException, BuildException
+from build_fluidicity.loaders import BuildTargetLoader
+from build_fluidicity.wrappers import LoggingBuildTargetBaseWrapper
 from testingutils import UltraSimpleBuildTargetSub
 
 
@@ -40,8 +40,8 @@ class TestHandleArgs(unittest.TestCase):
         except UnknownTargetException:
             self.fail("Unexpected exception raised")
 
-    @patch('build_fluidicity_jdglazer.cli.CompilerImpl')
-    @patch('build_fluidicity_jdglazer.cli.BuilderImpl')
+    @patch('build_fluidicity.cli.CompilerImpl')
+    @patch('build_fluidicity.cli.BuilderImpl')
     def test_handle_run_dry_verbose_run(self, builder_impl_mock, compiler_impl_mock):
         builder_impl_mock.return_value = (builder_instance := MagicMock(spec=BuilderImpl))
         compiler_impl_mock.return_value = (compiler_instance := MagicMock(spec=CompilerImpl))
@@ -53,8 +53,8 @@ class TestHandleArgs(unittest.TestCase):
         compiler_instance.show_target_hierarchy.assert_called_with(verbose=True)
         builder_instance.assert_not_called()
 
-    @patch('build_fluidicity_jdglazer.cli.CompilerImpl')
-    @patch('build_fluidicity_jdglazer.cli.BuilderImpl')
+    @patch('build_fluidicity.cli.CompilerImpl')
+    @patch('build_fluidicity.cli.BuilderImpl')
     def test_handle_run_live_run(self, builder_impl_mock, compiler_impl_mock):
         builder_impl_mock.return_value = (builder_instance := MagicMock(spec=BuilderImpl))
         compiler_impl_mock.return_value = (compiler_instance := MagicMock(spec=CompilerImpl))
@@ -66,8 +66,8 @@ class TestHandleArgs(unittest.TestCase):
         builder_impl_mock.assert_called_with(compiler_instance)
         builder_instance.run.assert_called_once()
 
-    @patch('build_fluidicity_jdglazer.cli.CompilerImpl')
-    @patch('build_fluidicity_jdglazer.cli.BuilderImpl')
+    @patch('build_fluidicity.cli.CompilerImpl')
+    @patch('build_fluidicity.cli.BuilderImpl')
     def test_clean_run(self, builder_impl_mock, compiler_impl_mock):
         builder_impl_mock.return_value = (builder_instance := MagicMock(spec=BuilderImpl))
         compiler_impl_mock.return_value = (compiler_instance := MagicMock(spec=CompilerImpl))
@@ -78,9 +78,9 @@ class TestHandleArgs(unittest.TestCase):
         builder_instance.run.assert_not_called()
         builder_instance.clean.assert_called_once()
 
-    @patch('build_fluidicity_jdglazer.cli._handle_list')
-    @patch('build_fluidicity_jdglazer.cli._handle_run')
-    @patch('build_fluidicity_jdglazer.cli._handle_clean')
+    @patch('build_fluidicity.cli._handle_list')
+    @patch('build_fluidicity.cli._handle_run')
+    @patch('build_fluidicity.cli._handle_clean')
     def test_handle_args_list(self, handle_clean_mock, handle_run_mock, handle_list_mock):
         handle_args(self.build_target_loader, args_in = [_LIST_ARG, _VERBOSE_FLAG])
 
@@ -88,9 +88,9 @@ class TestHandleArgs(unittest.TestCase):
         handle_clean_mock.assert_not_called()
         handle_run_mock.assert_not_called()
 
-    @patch('build_fluidicity_jdglazer.cli._handle_list')
-    @patch('build_fluidicity_jdglazer.cli._handle_run')
-    @patch('build_fluidicity_jdglazer.cli._handle_clean')
+    @patch('build_fluidicity.cli._handle_list')
+    @patch('build_fluidicity.cli._handle_run')
+    @patch('build_fluidicity.cli._handle_clean')
     def test_handle_args_run_dry(self, handle_clean_mock, handle_run_mock, handle_list_mock):
         handle_args(self.build_target_loader, args_in = [_RUN_ARG, "target_exists", _DRY_FLAG, _VERBOSE_FLAG])
 
@@ -98,9 +98,9 @@ class TestHandleArgs(unittest.TestCase):
         handle_list_mock.assert_not_called()
         handle_clean_mock.assert_not_called()
 
-    @patch('build_fluidicity_jdglazer.cli._handle_list')
-    @patch('build_fluidicity_jdglazer.cli._handle_run')
-    @patch('build_fluidicity_jdglazer.cli._handle_clean')
+    @patch('build_fluidicity.cli._handle_list')
+    @patch('build_fluidicity.cli._handle_run')
+    @patch('build_fluidicity.cli._handle_clean')
     def test_handle_args_live_run(self, handle_clean_mock, handle_run_mock, handle_list_mock):
         handle_args(self.build_target_loader, args_in = [_RUN_ARG, "target_exists"])
 
@@ -108,9 +108,9 @@ class TestHandleArgs(unittest.TestCase):
         handle_list_mock.assert_not_called()
         handle_clean_mock.assert_not_called()
 
-    @patch('build_fluidicity_jdglazer.cli._handle_list')
-    @patch('build_fluidicity_jdglazer.cli._handle_run')
-    @patch('build_fluidicity_jdglazer.cli._handle_clean')
+    @patch('build_fluidicity.cli._handle_list')
+    @patch('build_fluidicity.cli._handle_run')
+    @patch('build_fluidicity.cli._handle_clean')
     def test_handle_args_clean(self, handle_clean_mock, handle_run_mock, handle_list_mock):
         handle_args(self.build_target_loader, args_in = [_CLEAN_ARG, "target_exists"])
 
@@ -118,8 +118,8 @@ class TestHandleArgs(unittest.TestCase):
         handle_run_mock.assert_not_called()
         handle_list_mock.assert_not_called()
 
-    @patch('build_fluidicity_jdglazer.cli._handle_list')
-    @patch('build_fluidicity_jdglazer.cli.log_exception')
+    @patch('build_fluidicity.cli._handle_list')
+    @patch('build_fluidicity.cli.log_exception')
     def test_handle_args_exception_swallowed_and_logged(self, log_exception_mock, handle_list_mock):
         handle_list_mock.side_effect = BuildException("")
 

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "build_fluidicity_jdglazer"
+name = "build_fluidicity"
 version = "1.0.0"
 authors = [
   { name="Joshua Glazer", email="atrail2014@gmail.com" },

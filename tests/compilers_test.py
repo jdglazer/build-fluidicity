@@ -5,9 +5,9 @@
 import unittest
 from unittest.mock import MagicMock
 
-from build_fluidicity_jdglazer.compilers import CompilerImpl
-from build_fluidicity_jdglazer.exceptions import UnknownTargetException
-from build_fluidicity_jdglazer.loaders import BasicBuildTargetLoader, build_target_loader
+from build_fluidicity.compilers import CompilerImpl
+from build_fluidicity.exceptions import UnknownTargetException
+from build_fluidicity.loaders import BasicBuildTargetLoader, build_target_loader
 from testingutils import UltraSimpleBuildTargetSub, SimpleClassA, SimpleClassB
 
 

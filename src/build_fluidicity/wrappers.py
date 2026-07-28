@@ -5,8 +5,8 @@
 from abc import ABC
 from typing import List, Optional
 
-from build_fluidicity_jdglazer.targets import BuildTarget, BuildTargetBase
-from build_fluidicity_jdglazer.utils import log, log_exception
+from build_fluidicity.targets import BuildTarget, BuildTargetBase
+from build_fluidicity.utils import log, log_exception
 
 
 class BuildTargetBaseWrapper(BuildTargetBase, ABC):

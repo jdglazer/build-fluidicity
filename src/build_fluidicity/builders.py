@@ -5,8 +5,8 @@
 from abc import abstractmethod, ABC
 from typing import List, Iterable
 
-from build_fluidicity_jdglazer.compilers import Compiler
-from build_fluidicity_jdglazer.targets import TargetLifecycle
+from build_fluidicity.compilers import Compiler
+from build_fluidicity.targets import TargetLifecycle
 
 class Builder(ABC):
     """Abstract Base type for all builders
